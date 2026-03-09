@@ -13,7 +13,6 @@
         .exam-layout { display: none; grid-template-columns: 1fr 280px; gap: 20px; align-items: start; }
         .question-area { background: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 8px; min-height: 450px; }
         
-        /* Navigasi Melayang */
         .nav-panel { 
             background: #f8f9fa; border: 1px solid #ddd; padding: 15px; border-radius: 8px; 
             position: sticky; top: 20px; max-height: 90vh; overflow-y: auto; 
@@ -37,7 +36,6 @@
         .btn-toggle { background: #607d8b; width: 100%; margin-bottom: 10px; display: none; }
         .btn-reset { background: #f0f0f0; color: #d93025; width: 100%; margin-top: 20px; font-size: 11px; border: 1px solid #ddd; }
         
-        /* Modal Kustom (Tanpa URL) */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
         .modal-box { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
         .modal-btn-group { display: flex; justify-content: center; gap: 10px; margin-top: 20px; }
@@ -51,7 +49,7 @@
 <div id="customModal" class="modal-overlay">
     <div class="modal-box">
         <h3 id="modalTitle" style="margin-top:0; color:var(--primary);">Pemberitahuan</h3>
-        <p id="modalMsg" style="font-size: 16px; line-height: 1.5;"></p>
+        <p id="modalMsg" style="white-space: pre-line; font-size: 16px; line-height: 1.5;"></p>
         <div id="modalFooter" class="modal-btn-group">
             <button class="btn btn-blue" onclick="closeModal()">Oke</button>
         </div>
@@ -61,13 +59,11 @@
 <div class="container">
     <div id="login-sec">
         <div class="header-info"><h2>UJIAN DIGITAL</h2><h3>INPUT IDENTITAS</h3></div>
-        
         <label>Pilih Sekolah:</label>
         <select id="stuSekolah">
             <option value="SDN KARANGREJEK I">SDN KARANGREJEK I</option>
             <option value="SDN LAIN">SDN LAIN</option>
         </select>
-
         <label>Nama Lengkap:</label><input type="text" id="stuName">
         <label>Nomor Absen:</label><input type="number" id="stuNo">
         <label>Mata Pelajaran:</label>
@@ -106,7 +102,7 @@
     <div id="result-sec" style="display:none; text-align:center">
         <h2>HASIL UJIAN</h2>
         <h1 id="skor-akhir" style="font-size:80px; color:var(--primary)">0</h1>
-        <div id="info-pribadi" style="margin-bottom: 20px; font-weight: bold;"></div>
+        <div id="info-pribadi" style="margin-bottom: 20px; font-weight: bold; line-height: 1.6;"></div>
         <div id="stat-kirim" style="font-weight:bold; padding:15px; border-radius:8px;">Mengirim jawaban...</div>
     </div>
 </div>
@@ -221,13 +217,11 @@ Semua lampu menyala
         document.getElementById('modalMsg').innerText = msg;
         const footer = document.getElementById('modalFooter');
         footer.innerHTML = "";
-        
         if(showCancel) {
             let btnBatal = document.createElement("button");
             btnBatal.className = "btn"; btnBatal.style.background = "#ccc"; btnBatal.innerText = "Batal";
             btnBatal.onclick = closeModal; footer.appendChild(btnBatal);
         }
-
         let btnOk = document.createElement("button");
         btnOk.className = "btn btn-blue"; btnOk.innerText = "Oke";
         btnOk.onclick = () => { closeModal(); if(onOk) onOk(); };
@@ -241,16 +235,14 @@ Semua lampu menyala
         const s = document.getElementById('stuSekolah').value;
         const n = document.getElementById('stuName').value;
         const a = document.getElementById('stuNo').value;
+        const m = document.getElementById('stuMapel').value;
         if(!n || !a) return showModal("Peringatan", "Isi Nama dan Absen!");
-        
         document.getElementById('login-sec').style.display = 'none';
         document.getElementById('exam-sec').style.display = 'grid';
-        
         localStorage.setItem('wonosari_sekolah', s);
         localStorage.setItem('wonosari_name', n);
         localStorage.setItem('wonosari_no', a);
-        localStorage.setItem('wonosari_mapel', document.getElementById('stuMapel').value);
-        
+        localStorage.setItem('wonosari_mapel', m);
         tampil();
         timer = setInterval(updateTimer, 1000);
     }
@@ -260,7 +252,6 @@ Semua lampu menyala
         localStorage.setItem('wonosari_time', totalSec);
         let m = Math.floor(Math.abs(totalSec)/60), s = Math.abs(totalSec)%60;
         let display = `${m}:${s<10?'0'+s:s}`;
-        
         if (totalSec > 0) {
             document.getElementById('timer').innerText = display;
         } else {
@@ -344,7 +335,9 @@ Semua lampu menyala
         
         document.getElementById('exam-sec').style.display = 'none';
         document.getElementById('result-sec').style.display = 'block';
-        document.getElementById('info-pribadi').innerText = `${sekolah} | ${nama} | Absen: ${absen}`;
+        
+        // PERBAIKAN: Menampilkan Mapel di Notif Akhir
+        document.getElementById('info-pribadi').innerText = `${sekolah}\n${nama} | Absen: ${absen}\nMapel: ${mapel}`;
         
         let benar = 0, rincian = [];
         quizData.forEach((q, i) => {
@@ -372,4 +365,3 @@ Semua lampu menyala
 </script>
 </body>
 </html>
-
