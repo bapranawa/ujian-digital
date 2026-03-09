@@ -3,257 +3,229 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ujian Digital Sekolah - IPAS Bab 5</title>
+    <title>Ujian Digital SDN Karangrejek I Wonosari</title>
     <style>
         :root { --primary: #1a73e8; --secondary: #fbbc04; --danger: #d93025; --bg: #f1f3f4; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 900px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 15px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 950px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .header-info { text-align: center; border-bottom: 2px solid #eee; margin-bottom: 20px; padding-bottom: 10px; }
         .exam-layout { display: none; grid-template-columns: 1fr 280px; gap: 20px; }
-        .question-area { background: #fff; border: 1px solid #ddd; padding: 25px; border-radius: 8px; min-height: 400px; }
-        .navigation-area { background: #f8f9fa; border: 1px solid #ddd; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between; }
+        .question-area { background: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 8px; min-height: 450px; }
+        .nav-panel { background: #f8f9fa; border: 1px solid #ddd; padding: 15px; border-radius: 8px; }
         .num-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 10px; }
-        .num-btn { padding: 10px; border: 1px solid #ccc; background: #fff; cursor: pointer; border-radius: 4px; text-align: center; font-weight: bold; }
+        .num-btn { padding: 10px; border: 1px solid #ccc; background: #fff; cursor: pointer; border-radius: 4px; text-align: center; font-weight: bold; transition: 0.2s; }
         .num-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
-        .num-btn.filled { background: #e8f0fe; border-color: var(--primary); color: var(--primary); }
-        .num-btn.doubt { background: var(--secondary); color: white; border-color: var(--secondary); }
-        .option { display: block; border: 2px solid #eee; margin-bottom: 12px; padding: 15px; cursor: pointer; border-radius: 8px; font-size: 16px; }
+        .num-btn.filled { background: #e8f0fe; color: var(--primary); border-color: var(--primary); }
+        .num-btn.doubt { background: var(--secondary) !important; color: white !important; border-color: var(--secondary) !important; }
+        .option { display: flex; align-items: center; border: 2px solid #eee; margin-bottom: 12px; padding: 15px; cursor: pointer; border-radius: 8px; transition: 0.2s; }
         .option.selected { border-color: var(--primary); background: #e8f0fe; font-weight: bold; }
-        .action-btns { display: flex; justify-content: space-between; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; }
-        .btn { padding: 12px 25px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .btn-blue { background: var(--primary); color: white; }
-        .btn-yellow { background: var(--secondary); color: white; }
-        .btn-red { background: var(--danger); color: white; width: 100%; margin-top: 20px; }
-        #identity-section { max-width: 400px; margin: 0 auto; text-align: center; }
-        #score-board { text-align: center; display: none; padding: 40px 0; }
-        .q-img { max-width: 100%; height: auto; border-radius: 8px; margin: 15px 0; display: block; }
-        /* Style tombol reset di posisi bawah */
-        .reset-container { margin-top: auto; padding-top: 30px; }
-        .btn-reset { background: #eeeeee; color: #888; width: 100%; font-size: 10px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; }
+        .opt-letter { font-weight: bold; margin-right: 12px; color: var(--primary); }
+        .q-img { max-width: 100%; height: auto; border-radius: 8px; margin: 15px 0; display: block; border: 1px solid #ddd; }
+        .btn { padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; }
+        .btn-blue { background: var(--primary); }
+        .btn-yellow { background: var(--secondary); }
+        .btn-red { background: var(--danger); width: 100%; margin-top: 20px; }
+        .btn-toggle { background: #607d8b; width: 100%; margin-bottom: 10px; display: none; }
+        .btn-reset { background: #f0f0f0; color: #d93025; width: 100%; margin-top: 20px; font-size: 11px; border: 1px solid #ddd; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0 15px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        @media (max-width: 768px) { .exam-layout { grid-template-columns: 1fr; } .nav-panel { display: none; } .btn-toggle { display: block; } }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="identity-section">
-        <div class="header-info">
-            <h2>SDN KARANGREJEK I</h2> 
-            <h3>UJIAN SUMATIF BAB 5</h3>
-            <p>Mata Pelajaran: <b>MATEMATIKA</b> | Kelas: <b>6</b></p>
-        </div>
-        <div style="text-align: left;">
-            <label><b>Nama Lengkap:</b></label>
-            <input type="text" id="studentName" placeholder="Ketik nama..." style="width:100%; padding:12px; margin:10px 0; border:1px solid #ccc; border-radius:6px;">
-            <label><b>Nomor Absen:</b></label>
-            <input type="number" id="studentNo" placeholder="Nomor absen..." style="width:100%; padding:12px; margin:10px 0; border:1px solid #ccc; border-radius:6px;">
-            <button class="btn btn-blue" style="width:100%; margin-top:10px;" onclick="startExam()">MULAI UJIAN</button>
-            <p id="resume-msg" style="color: var(--primary); font-size: 12px; display: none; text-align: center; margin-top: 10px;">
-                <i>Ditemukan data ujian sebelumnya. Klik Mulai untuk melanjutkan.</i>
-            </p>
-        </div>
+    <div id="login-sec">
+        <div class="header-info"><h2>SDN KARANGREJEK I</h2><h3>UJIAN DIGITAL</h3></div>
+        <label>Nama Lengkap:</label><input type="text" id="stuName">
+        <label>Nomor Absen:</label><input type="number" id="stuNo">
+        <label>Mata Pelajaran:</label>
+        <select id="stuMapel"><option value="BAHASA INDONESIA">BAHASA INDONESIA</option><option value="IPAS">IPAS</option><option value="MATEMATIKA">MATEMATIKA</option></select>
+        <button class="btn btn-blue" style="width:100%" onclick="mulai()">MULAI UJIAN</button>
+        <p id="resume-hint" style="display:none; color:green; text-align:center; font-size:12px; margin-top:10px;"><i>Draf ditemukan. Melanjutkan sesi sebelumnya...</i></p>
     </div>
 
-    <div id="exam-layout" class="exam-layout">
+    <div id="exam-sec" class="exam-layout">
         <div class="question-area">
-            <div id="timer-box" style="float: right; font-weight: bold; color: var(--danger);">Sisa Waktu: <span id="time-left">00:00</span></div>
-            <div id="q-number" style="font-weight: bold; color: var(--primary); margin-bottom: 10px; font-size: 18px;">Soal No. 1</div>
-            <div id="questionText" style="font-size: 18px; line-height: 1.6; margin-bottom: 20px;"></div>
-            <div id="optionsArea"></div>
-            <div class="action-btns">
-                <button class="btn btn-blue" onclick="prevQ()">Sebelumnya</button>
+            <button class="btn btn-toggle" onclick="toggleNav()">Tampilkan/Sembunyikan Daftar Nomor</button>
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px">
+                <b id="q-num" style="color:var(--primary); font-size:1.1em;">Soal No. 1</b>
+                <b id="timer" style="color:var(--danger)">00:00</b>
+            </div>
+            <div id="q-text" style="font-size:18px; margin-bottom:20px"></div>
+            <div id="opt-area"></div>
+            <div style="display:flex; justify-content:space-between; margin-top:20px">
+                <button class="btn btn-blue" onclick="nav(-1)">Kembali</button>
                 <button class="btn btn-yellow" onclick="toggleDoubt()">Ragu-Ragu</button>
-                <button class="btn btn-blue" onclick="nextQ()">Selanjutnya</button>
+                <button class="btn btn-blue" onclick="nav(1)">Lanjut</button>
             </div>
         </div>
-
-        <div class="navigation-area">
-            <div>
-                <h4 style="margin-top:0;">Navigasi Nomor</h4>
-                <div id="num-grid" class="num-grid"></div>
-                <button class="btn btn-red" onclick="confirmFinish()">SELESAI & KIRIM</button>
-            </div>
-            
-            <div class="reset-container">
-                <button class="btn-reset" onclick="resetLocalStorage()">Hapus Draft (Reset Total)</button>
-            </div>
+        <div class="nav-panel" id="nav-panel">
+            <h4 style="margin:0">Navigasi</h4>
+            <div id="num-grid" class="num-grid"></div>
+            <button class="btn btn-red" onclick="selesai()">SELESAI & KIRIM</button>
+            <button class="btn btn-reset" onclick="resetSemuaDraf()">HAPUS SEMUA DRAF JAWABAN</button>
         </div>
     </div>
 
-    <div id="score-board">
-        <h2 id="res-school">HASIL UJIAN</h2>
-        <p>Nilai Anda:</p>
-        <h1 id="final-score" style="font-size: 100px; color: var(--primary); margin: 10px 0;">0</h1>
-        <div id="final-details" style="font-size: 18px;"></div>
-        <div id="upload-status" style="margin-top:20px; font-weight:bold;"></div>
+    <div id="result-sec" style="display:none; text-align:center">
+        <h2>HASIL UJIAN</h2>
+        <h1 id="skor-akhir" style="font-size:80px; color:var(--primary)">0</h1>
+        <div id="info-pribadi" style="margin-bottom: 20px; font-weight: bold;"></div>
+        <div id="stat-kirim" style="font-weight:bold; padding:15px; border-radius:8px;">Mengirim jawaban...</div>
     </div>
 </div>
 
 <script>
-    const rawSoal = `
-1. Perhatikan gambar berikut. Organ tubuh ini berfungsi untuk... [IMG: https://img.global.news.samsung.com/id/wp-content/uploads/2024/11/28115936/Tampilan-Galaxy-A16-Gray-1000x667.jpg]
-A. Memompa darah
-B. Pernapasan *
-C. Pencernaan
-D. Ekskresi
+    const databaseSoal = `
+1. Organ pernapasan manusia adalah?
+Paru-paru *
+Jantung
+Hati
+Ginjal
 
-2. Contoh sumber energi yang tidak dapat diperbarui adalah?
-A. Angin
-B. Air
-C. Batu Bara *
-D. Matahari
+2. Perhatikan gambar! Ini adalah planet? [IMG: https://upload.wikimedia.org/wikipedia/commons/0/02/OSIRIS_Mars_true_color.jpg]
+Mars *
+Venus
+Bumi
+Merkurius
     `;
 
-    let quizData = [];
-    let answers = []; 
-    let doubtStatus = []; 
-    let currentIdx = 0;
-    let timer;
-    let totalSec = 75 * 60;
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbwQRVutzYDO6GUIpm3XvW5fnc7zM9TorX2i8WwqkOY50h7kiX_9VqvjeVFaG8mM7WDXww/exec';
+    let quizData = [], answers = [], doubtStatus = [], current = 0, timer, totalSec = 75 * 60;
 
-    window.onload = function() {
-        const lines = rawSoal.split('\n').map(l => l.trim()).filter(l => l !== "");
-        let curQ = null;
-        lines.forEach(line => {
-            if(!/^[A-E][\.\)]/i.test(line)) {
-                if(curQ) quizData.push(curQ);
-                curQ = { q: line, opts: [], key: -1 };
-            } else if(curQ) {
-                if(line.includes('*')) curQ.key = curQ.opts.length;
-                curQ.opts.push(line.replace(/\*/g, ""));
+    window.onload = () => {
+        databaseSoal.trim().split(/\n\s*\n/).forEach(block => {
+            let lines = block.split('\n').map(l => l.trim()).filter(l => l !== "");
+            let q = lines[0], opts = [], key = "";
+            for(let i=1; i<lines.length; i++) {
+                let txt = lines[i].replace('*','').trim();
+                if(lines[i].includes('*')) key = txt;
+                opts.push(txt);
             }
+            quizData.push({q, opts: opts.sort(() => Math.random() - 0.5), key});
         });
-        if(curQ) quizData.push(curQ);
-        quizData = quizData.filter(q => q.opts.length > 0);
 
-        if(localStorage.getItem('studentName')) {
-            document.getElementById('studentName').value = localStorage.getItem('studentName');
-            document.getElementById('studentNo').value = localStorage.getItem('studentNo');
-            document.getElementById('resume-msg').style.display = 'block';
-            answers = JSON.parse(localStorage.getItem('answers')) || new Array(quizData.length).fill(null);
-            doubtStatus = JSON.parse(localStorage.getItem('doubtStatus')) || new Array(quizData.length).fill(false);
-            totalSec = parseInt(localStorage.getItem('timeLeft')) || totalSec;
+        if(localStorage.getItem('wonosari_name')) {
+            document.getElementById('resume-hint').style.display = 'block';
+            document.getElementById('stuName').value = localStorage.getItem('wonosari_name');
+            document.getElementById('stuNo').value = localStorage.getItem('wonosari_no');
+            answers = JSON.parse(localStorage.getItem('wonosari_ans')) || new Array(quizData.length).fill(null);
+            doubtStatus = JSON.parse(localStorage.getItem('wonosari_doubt')) || new Array(quizData.length).fill(false);
+            totalSec = parseInt(localStorage.getItem('wonosari_time')) || (75 * 60);
         } else {
             answers = new Array(quizData.length).fill(null);
             doubtStatus = new Array(quizData.length).fill(false);
         }
     };
 
-    function startExam() {
-        if(!document.getElementById('studentName').value || !document.getElementById('studentNo').value) {
-            return alert("Isi Nama dan Absen!");
-        }
-        localStorage.setItem('studentName', document.getElementById('studentName').value);
-        localStorage.setItem('studentNo', document.getElementById('studentNo').value);
-        document.getElementById('identity-section').style.display = 'none';
-        document.getElementById('exam-layout').style.display = 'grid';
+    function mulai() {
+        const n = document.getElementById('stuName').value;
+        const a = document.getElementById('stuNo').value;
+        if(!n || !a) return alert("Isi Nama dan Absen!");
+        
+        document.getElementById('login-sec').style.display = 'none';
+        document.getElementById('exam-sec').style.display = 'grid';
+        
+        localStorage.setItem('wonosari_name', n);
+        localStorage.setItem('wonosari_no', a);
+        localStorage.setItem('wonosari_mapel', document.getElementById('stuMapel').value);
+        
+        tampil();
+        timer = setInterval(() => {
+            totalSec--;
+            localStorage.setItem('wonosari_time', totalSec);
+            let m = Math.floor(totalSec/60), s = totalSec%60;
+            document.getElementById('timer').innerText = `${m}:${s<10?'0'+s:s}`;
+            if(totalSec<=0) selesai();
+        }, 1000);
+    }
+
+    function tampil() {
+        let d = quizData[current];
+        document.getElementById('q-num').innerText = "Soal No. " + (current + 1);
+        document.getElementById('q-text').innerHTML = d.q.replace(/\[IMG:\s*(.*?)\]/g, '<img src="$1" class="q-img">');
+        let html = "";
+        d.opts.forEach((o, i) => {
+            html += `<div class="option ${answers[current]===o?'selected':''}" onclick="pilih('${o}')">
+                <span class="opt-letter">${String.fromCharCode(65+i)}.</span>${o}</div>`;
+        });
+        document.getElementById('opt-area').innerHTML = html;
         renderNav();
-        showQ(0);
-        startTimer();
+    }
+
+    function pilih(v) { 
+        answers[current] = v; 
+        localStorage.setItem('wonosari_ans', JSON.stringify(answers));
+        tampil(); 
+    }
+
+    function toggleDoubt() {
+        doubtStatus[current] = !doubtStatus[current];
+        localStorage.setItem('wonosari_doubt', JSON.stringify(doubtStatus));
+        renderNav();
     }
 
     function renderNav() {
         let html = "";
-        for(let i=0; i<quizData.length; i++) {
-            let cls = "num-btn" + (i === currentIdx ? " active" : "") + (doubtStatus[i] ? " doubt" : (answers[i] !== null ? " filled" : ""));
-            html += `<div class="${cls}" onclick="showQ(${i})">${i+1}</div>`;
+        for(let i=0; i<quizData.length; i++){
+            let cls = "num-btn" + (i===current?" active":"") + (doubtStatus[i]?" doubt":(answers[i]?" filled":""));
+            html += `<div class="${cls}" onclick="current=${i};tampil()">${i+1}</div>`;
         }
         document.getElementById('num-grid').innerHTML = html;
     }
 
-    function showQ(idx) {
-        currentIdx = idx;
-        const data = quizData[idx];
-        document.getElementById('q-number').innerText = `Soal No. ${idx+1}`;
-        let rawText = data.q;
-        let processedText = rawText.replace(/\[IMG:\s*(.*?)\]/gi, (match, url) => {
-            return `<img src="${url.trim()}" class="q-img" alt="Gambar Soal">`;
-        });
-        document.getElementById('questionText').innerHTML = processedText;
-        let html = "";
-        data.opts.forEach((opt, i) => {
-            html += `<div class="option ${answers[idx] === i ? 'selected' : ''}" onclick="setAns(${i})">${opt}</div>`;
-        });
-        document.getElementById('optionsArea').innerHTML = html;
-        renderNav();
+    function nav(v) { 
+        let t = current + v; 
+        if(t>=0 && t<quizData.length) { current = t; tampil(); }
     }
 
-    function setAns(optIdx) { 
-        answers[currentIdx] = optIdx; 
-        saveDraft();
-        showQ(currentIdx); 
+    function toggleNav() {
+        let p = document.getElementById('nav-panel');
+        p.style.display = (p.style.display==='block')?'none':'block';
     }
 
-    function toggleDoubt() { 
-        doubtStatus[currentIdx] = !doubtStatus[currentIdx]; 
-        saveDraft();
-        renderNav(); 
-    }
-
-    function saveDraft() {
-        localStorage.setItem('answers', JSON.stringify(answers));
-        localStorage.setItem('doubtStatus', JSON.stringify(doubtStatus));
-        localStorage.setItem('timeLeft', totalSec);
-    }
-
-    function nextQ() { if(currentIdx < quizData.length - 1) showQ(currentIdx+1); }
-    function prevQ() { if(currentIdx > 0) showQ(currentIdx-1); }
-
-    function startTimer() {
-        timer = setInterval(() => {
-            totalSec--;
-            if(totalSec % 10 === 0) saveDraft();
-            let m = Math.floor(totalSec/60);
-            let s = totalSec%60;
-            document.getElementById('time-left').innerText = `${m}:${s < 10 ? '0' + s : s}`;
-            if(totalSec <= 0) finish();
-        }, 1000);
-    }
-
-    function confirmFinish() {
-        if(confirm("Selesai dan kirim jawaban?")) finish();
-    }
-
-    function finish() {
-        clearInterval(timer);
-        document.getElementById('exam-layout').style.display = 'none';
-        document.getElementById('score-board').style.display = 'block';
-        let score = 0;
-        quizData.forEach((q, i) => { if(answers[i] === q.key) score++; });
-        let finalVal = Math.round((score / quizData.length) * 100);
-        document.getElementById('final-score').innerText = finalVal;
-        document.getElementById('final-details').innerText = document.getElementById('studentName').value + " (Absen: " + document.getElementById('studentNo').value + ")";
-        sendToSheets(finalVal);
-        localStorage.clear();
-    }
-
-    function sendToSheets(v) {
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbylJ5Y3SZ2Q_LsCg9xcf_91hfxwleH_LijEFd3-uXa4Gn9myGcpJ1Clb8rb3or4movwTA/exec'; 
-        const payload = {
-            nama: document.getElementById('studentName').value,
-            absen: document.getElementById('studentNo').value,
-            mapel: "IPAS", 
-            sekolah: "SDN WONOSARI",
-            nilai: v
-        };
-        fetch(scriptURL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
-        .then(() => {
-            document.getElementById('upload-status').innerText = "✅ BERHASIL TERKIRIM!";
-            document.getElementById('upload-status').style.color = "green";
-        })
-        .catch(() => {
-            document.getElementById('upload-status').innerText = "❌ GAGAL KIRIM";
-            document.getElementById('upload-status').style.color = "red";
-        });
-    }
-
-    // FUNGSI RESET DENGAN KONFIRMASI KHUSUS
-    function resetLocalStorage() {
-        if(confirm("Hubungi Guru, Jangan Asal KLIK")) {
+    function resetSemuaDraf() {
+        if(confirm("Apakah Anda yakin ingin menghapus SEMUA jawaban? Hubungi Guru atau Pengawas.")){
             localStorage.clear();
             location.reload();
         }
     }
+
+    function selesai() {
+        if(!confirm("Kirim jawaban sekarang?")) return;
+        clearInterval(timer);
+        
+        const nama = localStorage.getItem('wonosari_name');
+        const absen = localStorage.getItem('wonosari_no');
+        const mapel = localStorage.getItem('wonosari_mapel');
+        
+        document.getElementById('exam-sec').style.display = 'none';
+        document.getElementById('result-sec').style.display = 'block';
+        document.getElementById('info-pribadi').innerText = `${nama} | Absen: ${absen} | Mapel: ${mapel}`;
+        
+        let benar = 0, rincian = [];
+        quizData.forEach((q, i) => {
+            if(answers[i] === q.key) benar++;
+            rincian.push(`No${i+1}:${answers[i]||'-'}`);
+        });
+        let skor = Math.round((benar/quizData.length)*100);
+        document.getElementById('skor-akhir').innerText = skor;
+        
+        fetch(scriptURL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify({
+                nama: nama,
+                absen: absen,
+                mapel: mapel,
+                nilai: skor,
+                analisis: rincian.join(" | ")
+            })
+        }).then(() => {
+            document.getElementById('stat-kirim').innerHTML = "✅ DATA BERHASIL TERKIRIM";
+            localStorage.clear();
+        });
+    }
 </script>
 </body>
 </html>
-
