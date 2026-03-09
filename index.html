@@ -9,26 +9,50 @@
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 15px; display: flex; justify-content: center; }
         .container { width: 100%; max-width: 950px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .header-info { text-align: center; border-bottom: 2px solid #eee; margin-bottom: 20px; padding-bottom: 10px; }
-        .exam-layout { display: none; grid-template-columns: 1fr 280px; gap: 20px; }
+        
+        /* Layout Utama */
+        .exam-layout { display: none; grid-template-columns: 1fr 280px; gap: 20px; align-items: start; }
+        
         .question-area { background: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 8px; min-height: 450px; }
-        .nav-panel { background: #f8f9fa; border: 1px solid #ddd; padding: 15px; border-radius: 8px; }
+        
+        /* Navigasi Melayang (Sticky) */
+        .nav-panel { 
+            background: #f8f9fa; 
+            border: 1px solid #ddd; 
+            padding: 15px; 
+            border-radius: 8px; 
+            position: -webkit-sticky; /* Dukungan Safari */
+            position: sticky; 
+            top: 20px; /* Jarak dari atas layar saat melayang */
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
         .num-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 10px; }
         .num-btn { padding: 10px; border: 1px solid #ccc; background: #fff; cursor: pointer; border-radius: 4px; text-align: center; font-weight: bold; transition: 0.2s; }
         .num-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
         .num-btn.filled { background: #e8f0fe; color: var(--primary); border-color: var(--primary); }
         .num-btn.doubt { background: var(--secondary) !important; color: white !important; border-color: var(--secondary) !important; }
+        
         .option { display: flex; align-items: center; border: 2px solid #eee; margin-bottom: 12px; padding: 15px; cursor: pointer; border-radius: 8px; transition: 0.2s; }
         .option.selected { border-color: var(--primary); background: #e8f0fe; font-weight: bold; }
         .opt-letter { font-weight: bold; margin-right: 12px; color: var(--primary); }
         .q-img { max-width: 100%; height: auto; border-radius: 8px; margin: 15px 0; display: block; border: 1px solid #ddd; }
+        
         .btn { padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; }
         .btn-blue { background: var(--primary); }
         .btn-yellow { background: var(--secondary); }
         .btn-red { background: var(--danger); width: 100%; margin-top: 20px; }
         .btn-toggle { background: #607d8b; width: 100%; margin-bottom: 10px; display: none; }
         .btn-reset { background: #f0f0f0; color: #d93025; width: 100%; margin-top: 20px; font-size: 11px; border: 1px solid #ddd; }
+        
         input, select { width: 100%; padding: 12px; margin: 8px 0 15px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        @media (max-width: 768px) { .exam-layout { grid-template-columns: 1fr; } .nav-panel { display: none; } .btn-toggle { display: block; } }
+        
+        @media (max-width: 768px) { 
+            .exam-layout { grid-template-columns: 1fr; } 
+            .nav-panel { position: relative; top: 0; display: none; } 
+            .btn-toggle { display: block; } 
+        }
     </style>
 </head>
 <body>
@@ -39,7 +63,11 @@
         <label>Nama Lengkap:</label><input type="text" id="stuName">
         <label>Nomor Absen:</label><input type="number" id="stuNo">
         <label>Mata Pelajaran:</label>
-        <select id="stuMapel"><option value="BAHASA INDONESIA">BAHASA INDONESIA</option><option value="IPAS">IPAS</option><option value="MATEMATIKA">MATEMATIKA</option></select>
+        <select id="stuMapel">
+            <option value="BAHASA INDONESIA">BAHASA INDONESIA</option>
+            <option value="IPAS">IPAS</option>
+            <option value="MATEMATIKA">MATEMATIKA</option>
+        </select>
         <button class="btn btn-blue" style="width:100%" onclick="mulai()">MULAI UJIAN</button>
         <p id="resume-hint" style="display:none; color:green; text-align:center; font-size:12px; margin-top:10px;"><i>Draf ditemukan. Melanjutkan sesi sebelumnya...</i></p>
     </div>
@@ -59,10 +87,11 @@
                 <button class="btn btn-blue" onclick="nav(1)">Lanjut</button>
             </div>
         </div>
+        
         <div class="nav-panel" id="nav-panel">
-            <h4 style="margin:0">Navigasi</h4>
+            <h4 style="margin:0">Navigasi Nomor</h4>
             <div id="num-grid" class="num-grid"></div>
-            <button class="btn btn-red" onclick="selesai()">SELESAI & KIRIM</button>
+            <button id="finish-btn" class="btn btn-red" onclick="cekSebelumSelesai()">SELESAI & KIRIM</button>
             <button class="btn btn-reset" onclick="resetSemuaDraf()">HAPUS SEMUA DRAF JAWABAN</button>
         </div>
     </div>
@@ -152,6 +181,7 @@ Semua lampu menyala
 
     const scriptURL = 'https://script.google.com/macros/s/AKfycbwQRVutzYDO6GUIpm3XvW5fnc7zM9TorX2i8WwqkOY50h7kiX_9VqvjeVFaG8mM7WDXww/exec';
     let quizData = [], answers = [], doubtStatus = [], current = 0, timer, totalSec = 75 * 60;
+    let isGracePeriod = false;
 
     window.onload = () => {
         databaseSoal.trim().split(/\n\s*\n/).forEach(block => {
@@ -191,13 +221,31 @@ Semua lampu menyala
         localStorage.setItem('wonosari_mapel', document.getElementById('stuMapel').value);
         
         tampil();
-        timer = setInterval(() => {
-            totalSec--;
-            localStorage.setItem('wonosari_time', totalSec);
-            let m = Math.floor(totalSec/60), s = totalSec%60;
-            document.getElementById('timer').innerText = `${m}:${s<10?'0'+s:s}`;
-            if(totalSec<=0) selesai();
-        }, 1000);
+        timer = setInterval(updateTimer, 1000);
+    }
+
+    function updateTimer() {
+        totalSec--;
+        localStorage.setItem('wonosari_time', totalSec);
+        
+        let m = Math.floor(Math.abs(totalSec)/60), s = Math.abs(totalSec)%60;
+        let display = `${m}:${s<10?'0'+s:s}`;
+        
+        if (totalSec > 0) {
+            document.getElementById('timer').innerText = display;
+        } else {
+            if (!isGracePeriod) {
+                isGracePeriod = true;
+                totalSec = 5 * 60; 
+                alert("WAKTU HABIS! Kamu diberikan 5 menit tambahan untuk memeriksa dan mengirim jawaban.");
+            }
+            document.getElementById('timer').innerText = "TAMBAHAN: " + display;
+            if (totalSec <= 0) {
+                clearInterval(timer);
+                alert("Waktu tambahan habis. Jawaban akan dikirim otomatis.");
+                selesai();
+            }
+        }
     }
 
     function tampil() {
@@ -232,6 +280,19 @@ Semua lampu menyala
             html += `<div class="${cls}" onclick="current=${i};tampil()">${i+1}</div>`;
         }
         document.getElementById('num-grid').innerHTML = html;
+    }
+
+    function cekSebelumSelesai() {
+        let kosong = [];
+        answers.forEach((ans, idx) => {
+            if (!ans) kosong.push(idx + 1);
+        });
+
+        if (kosong.length > 0) {
+            alert("MAAF! Jawaban belum lengkap.\nNomor yang belum diisi: " + kosong.join(", ") + "\n\nSilakan cek kembali jawabanmu agar semua terisi.");
+        } else {
+            selesai();
+        }
     }
 
     function nav(v) { 
