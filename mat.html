@@ -22,7 +22,7 @@
         .num-btn.filled { background: #e8f0fe; color: var(--primary); border-color: var(--primary); }
         .num-btn.doubt { background: var(--secondary) !important; color: white !important; border-color: var(--secondary) !important; }
 
-        /* Tombol Navigasi Melayang - Awalnya disembunyikan */
+        /* Tombol Navigasi Melayang */
         #toggleNavBtn { 
             display: none; 
             position: fixed; 
@@ -250,8 +250,17 @@ Semua besar susut salah
         localStorage.setItem('wonosari_name', n);
         localStorage.setItem('wonosari_no', a);
         localStorage.setItem('wonosari_mapel', document.getElementById('stuMapel').value);
+        
+        // Load data lama
         answers = JSON.parse(localStorage.getItem('wonosari_ans')) || new Array(quizData.length).fill(null);
         doubtStatus = JSON.parse(localStorage.getItem('wonosari_doubt')) || new Array(quizData.length).fill(false);
+        
+        // AUTO-RESUME NOMOR: Ambil nomor terakhir yang disimpan
+        const lastNum = parseInt(localStorage.getItem('wonosari_last_num'));
+        if(!isNaN(lastNum) && lastNum >= 0 && lastNum < quizData.length) {
+            current = lastNum;
+        }
+
         document.getElementById('login-sec').style.display = 'none';
         document.getElementById('exam-sec').style.display = 'grid';
         tampil();
@@ -266,6 +275,9 @@ Semua besar susut salah
     }
 
     function tampil() {
+        // Simpan nomor sekarang sebagai "terakhir dikunjungi"
+        localStorage.setItem('wonosari_last_num', current);
+
         let d = quizData[current], isMCMA = d.q.includes("[MCMA]"), isTABEL = d.q.includes("[TABEL]");
         document.getElementById('q-num').innerText = "Soal No. " + (current + 1);
         let teksSoal = d.q.replace("[TABEL]","").replace("[MCMA]","").replace(/\[IMG:\s*(.*?)\]/g, '<img src="$1" class="q-img">');
@@ -344,7 +356,6 @@ Semua besar susut salah
             current = t; 
             tampil(); 
         } else if (v === 1 && current === quizData.length - 1) {
-            // Jika menekan lanjut di nomor terakhir, tampilkan navigasi di HP
             if(window.innerWidth <= 768) {
                 const side = document.getElementById('sidebar');
                 if(!side.classList.contains('open')) {
@@ -404,7 +415,21 @@ Semua besar susut salah
             document.getElementById('stat-kirim').style.background = "#f8d7da";
         });
     }
+
+    window.onload = function() {
+        const savedName = localStorage.getItem('wonosari_name');
+        const savedNo = localStorage.getItem('wonosari_no');
+        const savedSekolah = localStorage.getItem('wonosari_sekolah');
+        const savedMapel = localStorage.getItem('wonosari_mapel');
+
+        if(savedName && savedNo) {
+            document.getElementById('stuSekolah').value = savedSekolah;
+            document.getElementById('stuName').value = savedName;
+            document.getElementById('stuNo').value = savedNo;
+            document.getElementById('stuMapel').value = savedMapel;
+            mulai();
+        }
+    };
 </script>
 </body>
 </html>
-
