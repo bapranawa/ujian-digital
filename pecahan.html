@@ -10,27 +10,29 @@
         .container { width: 100%; max-width: 950px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-top: 15px; margin-bottom: 15px; }
         .header-info { text-align: center; border-bottom: 2px solid #eee; margin-bottom: 20px; padding-bottom: 10px; }
         
+        /* Layout */
         .exam-layout { display: none; grid-template-columns: 1fr 280px; gap: 20px; align-items: start; }
         .question-area { background: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 8px; min-height: 450px; position: relative; }
         
+        /* Navigasi */
         .nav-panel { background: #f8f9fa; border: 1px solid #ddd; padding: 15px; border-radius: 8px; position: sticky; top: 75px; max-height: 80vh; overflow-y: auto; }
         .num-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 10px; }
-        .num-btn { padding: 10px; border: 1px solid #ccc; background: #fff; cursor: pointer; border-radius: 4px; text-align: center; font-weight: bold; font-size: 14px; }
+        .num-btn { padding: 10px; border: 1px solid #ccc; background: #fff; cursor: pointer; border-radius: 4px; text-align: center; font-weight: bold; font-size: 14px; transition: 0.2s; }
         .num-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
         .num-btn.filled { background: #e8f0fe; color: var(--primary); border-color: var(--primary); }
-        .num-btn.doubt { background: var(--secondary) !important; color: white !important; }
+        .num-btn.doubt { background: var(--secondary) !important; color: white !important; border-color: var(--secondary) !important; }
 
-        /* Gaya Pecahan & Simbol */
+        /* Matematika & Tabel */
         .frac { display: inline-block; vertical-align: middle; text-align: center; font-size: 0.9em; margin: 0 2px; }
         .frac span { display: block; padding: 0 2px; }
         .frac span.bottom { border-top: 1px solid #000; }
-
         .table-responsive { width: 100%; overflow-x: auto; margin-top: 10px; border: 1px solid #ddd; border-radius: 8px; }
         .soal-tabel { width: 100%; border-collapse: collapse; min-width: 500px; }
         .soal-tabel th, .soal-tabel td { border: 1px solid #ccc; padding: 12px; text-align: center; }
         .soal-tabel th { background: #f1f3f4; }
         
-        .option { display: flex; align-items: center; border: 2px solid #eee; margin-bottom: 12px; padding: 15px; cursor: pointer; border-radius: 8px; }
+        /* Opsi */
+        .option { display: flex; align-items: center; border: 2px solid #eee; margin-bottom: 12px; padding: 15px; cursor: pointer; border-radius: 8px; transition: 0.2s; }
         .option.selected { border-color: var(--primary); background: #e8f0fe; font-weight: bold; }
         .opt-box, .opt-circle { width: 18px; height: 18px; border: 2px solid var(--primary); margin-right: 12px; flex-shrink: 0; }
         .opt-circle { border-radius: 50%; }
@@ -38,20 +40,17 @@
         .selected .opt-box:after { content: '✔'; font-size: 12px; }
         .selected .opt-circle { background: var(--primary); box-shadow: inset 0 0 0 3px white; }
 
-        .q-img { max-width: 100%; height: auto; border-radius: 8px; margin: 15px 0; border: 1px solid #ddd; display: block; }
-        
+        .q-img { max-width: 100%; max-height: 300px; border-radius: 8px; margin: 15px 0; border: 1px solid #ddd; display: block; }
         .btn { padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; }
         .btn-blue { background: var(--primary); }
         .btn-yellow { background: var(--secondary); }
         .btn-red { background: var(--danger); width: 100%; margin-top: 20px; }
-        
+
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; justify-content: center; align-items: center; }
         .modal-box { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; text-align: center; }
         input, select { width: 100%; padding: 12px; margin: 8px 0 15px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
 
-        @media screen and (max-width: 768px) {
-            .exam-layout { grid-template-columns: 1fr; }
-        }
+        @media screen and (max-width: 768px) { .exam-layout { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -79,7 +78,7 @@
             <option value="IPAS">IPAS</option>
             <option value="MATEMATIKA">MATEMATIKA</option>
         </select>
-        <button id="btnMulai" class="btn btn-blue" style="width:100%" onclick="mulai()">MEMUAT SOAL...</button>
+        <button id="btnMulai" class="btn btn-blue" style="width:100%" onclick="mulai()">MENGAMBIL SOAL...</button>
     </div>
 
     <div id="exam-sec" class="exam-layout">
@@ -120,22 +119,28 @@
 
     async function ambilData() {
         try {
-            const response = await fetch(urlCSV);
-            const data = await response.text();
-            prosesCSV(data);
+            const res = await fetch(urlCSV);
+            const text = await res.text();
+            prosesCSV(text);
             document.getElementById('btnMulai').innerText = "MULAI UJIAN";
-        } catch (e) { document.getElementById('btnMulai').innerText = "GAGAL MUAT SOAL"; }
+        } catch (e) { document.getElementById('btnMulai').innerText = "GAGAL MUAT (CORS ERROR)"; }
     }
 
     function prosesCSV(csv) {
-        // Menggunakan delimiter ";" (titik koma) sesuai standar Google Sheets Indonesia
-        const rows = csv.split('\n').slice(1);
+        const cleanCSV = csv.replace(/^\uFEFF/, '');
+        const rows = cleanCSV.split('\n').slice(1);
+        quizData = []; 
+
         rows.forEach(row => {
             if(!row.trim()) return;
-            const cols = row.split(';'); // <--- KUNCI PERBAIKAN: Pakai titik koma
-            let qRaw = (cols[0] || "").replace(/^"|"$/g, '').trim();
-            let optRaw = (cols[1] || "").replace(/^"|"$/g, '').trim();
-            let imgUrl = (cols[2] || "").replace(/^"|"$/g, '').trim();
+            const cols = row.split(';'); // Pakai pemisah titik koma
+            
+            // Kolom A=0 (No), B=1 (Soal), C=2 (Pilihan), D=3 (Gambar)
+            let qRaw = (cols[1] || "").replace(/^"|"$/g, '').trim(); 
+            let optRaw = (cols[2] || "").replace(/^"|"$/g, '').trim();
+            let imgUrl = (cols[3] || "").replace(/^"|"$/g, '').trim();
+
+            if(!qRaw) return;
 
             let opts = [], keys = [];
             const lines = optRaw.split('\\n');
@@ -143,11 +148,12 @@
             if(qRaw.includes("[TABEL]")) {
                 lines.forEach(line => {
                     let parts = line.split('|').map(p => p.trim());
-                    if(parts.length < 2) return;
-                    let subQ = parts[0];
-                    let subOpts = parts.slice(1).map(o => o.replace('*','').trim());
-                    let subKey = parts.slice(1).find(o => o.includes('*'))?.replace('*','').trim();
-                    opts.push({subQ, subOpts}); keys.push(subKey);
+                    if(parts.length >= 2) {
+                        let subQ = parts[0];
+                        let subOpts = parts.slice(1).map(o => o.replace('*','').trim());
+                        let subKey = parts.slice(1).find(o => o.includes('*'))?.replace('*','').trim();
+                        opts.push({subQ, subOpts}); keys.push(subKey);
+                    }
                 });
             } else {
                 lines.forEach(line => {
@@ -156,7 +162,7 @@
                     opts.push(clean);
                 });
             }
-            if(qRaw) quizData.push({ q: qRaw, opts, keys, img: imgUrl });
+            quizData.push({ q: qRaw, opts, keys, img: imgUrl });
         });
     }
 
@@ -171,7 +177,7 @@
         let d = quizData[current], isMCMA = d.q.includes("[MCMA]"), isTABEL = d.q.includes("[TABEL]");
         document.getElementById('q-num').innerText = "Soal No. " + (current + 1);
         let htmlSoal = formatText(d.q.replace("[TABEL]","").replace("[MCMA]",""));
-        if(d.img) htmlSoal += `<img src="${d.img}" class="q-img">`;
+        if(d.img && d.img !== "") htmlSoal += `<img src="${d.img}" class="q-img">`;
         document.getElementById('q-text').innerHTML = htmlSoal;
 
         let htmlOpt = "";
@@ -190,7 +196,7 @@
             d.opts.forEach(o => {
                 let sel = isMCMA ? (Array.isArray(answers[current]) && answers[current].includes(o)) : (answers[current] === o);
                 htmlOpt += `<div class="option ${sel?'selected':''}" onclick="pilih('${o}', ${isMCMA})">
-                    <div class="${isMCMA?'opt-box':'opt-circle'}"></div><span>${formatText(o)}</span></div>`;
+                    <div class="${isMCMA?'opt-box':'opt-circle'}"></div><span>${formatText(o}</span></div>`;
             });
         }
         document.getElementById('opt-area').innerHTML = htmlOpt;
@@ -200,12 +206,9 @@
     function mulai() {
         const n = document.getElementById('stuName').value, a = document.getElementById('stuNo').value;
         if(!n || !a) return showModal("Peringatan", "Lengkapi identitas!");
-        if(quizData.length === 0) return showModal("Error", "Soal belum termuat.");
-
-        localStorage.setItem('wonosari_name', n);
+        if(quizData.length === 0) return showModal("Error", "Gagal memuat soal. Pastikan link CSV publik dan gunakan server/hosting.");
         answers = new Array(quizData.length).fill(null);
         doubtStatus = new Array(quizData.length).fill(false);
-
         document.getElementById('login-sec').style.display = 'none';
         document.getElementById('exam-sec').style.display = 'grid';
         tampil();
@@ -247,7 +250,7 @@
         document.getElementById('num-grid').innerHTML = html;
     }
 
-    function cekSebelumSelesai() { showModal("Konfirmasi", "Yakin ingin kirim?", () => selesai(), true); }
+    function cekSebelumSelesai() { showModal("Konfirmasi", "Selesai ujian?", () => selesai(), true); }
 
     function selesai() {
         clearInterval(timer);
@@ -265,17 +268,17 @@
         document.getElementById('stat-kirim').innerHTML = "✅ JAWABAN TERSIMPAN";
     }
 
-    function showModal(title, msg, onOk = null, showCancel = false) {
-        document.getElementById('modalTitle').innerText = title;
-        document.getElementById('modalMsg').innerText = msg;
+    function showModal(t, m, f, c = false) {
+        document.getElementById('modalTitle').innerText = t;
+        document.getElementById('modalMsg').innerText = m;
         const footer = document.getElementById('modalFooter');
         footer.innerHTML = "";
-        if(showCancel) {
+        if(c) {
             let b = document.createElement("button"); b.className="btn"; b.innerText="Batal"; b.onclick=closeModal;
             footer.appendChild(b);
         }
         let o = document.createElement("button"); o.className="btn btn-blue"; o.innerText="Oke";
-        o.onclick=()=>{closeModal(); if(onOk) onOk();};
+        o.onclick=()=>{closeModal(); if(f) f();};
         footer.appendChild(o);
         document.getElementById('customModal').style.display = 'flex';
     }
