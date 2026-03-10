@@ -364,7 +364,7 @@ Semua besar susut salah
             if (!lengkap) nomorKosong.push(i + 1);
         });
         if(nomorKosong.length > 0) {
-            showModal("Belum Lengkap", "Beberapa soal belum dikerjakan atau pilihan jawaban belum terisi semua:\nNomor: " + nomorKosong.join(", "));
+            showModal("Belum Lengkap", "Cek soal belum dikerjakan atau pilihan jawaban belum terisi semua:\nNomor: " + nomorKosong.join(", "));
         } else {
             showModal("Konfirmasi", "Yakin ingin mengirim jawaban?", () => selesai(), true);
         }
@@ -407,3 +407,4 @@ Semua besar susut salah
 </script>
 </body>
 </html>
+
