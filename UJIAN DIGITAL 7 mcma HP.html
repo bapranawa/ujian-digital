@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ujian Digital SDN Karangrejek I</title>
+    <style>
+        :root { --primary: #1a73e8; --secondary: #fbbc04; --danger: #d93025; --bg: #f1f3f4; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 0; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 950px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-top: 15px; margin-bottom: 15px; }
+        .header-info { text-align: center; border-bottom: 2px solid #eee; margin-bottom: 20px; padding-bottom: 10px; }
+        
+        /* Layout Utama */
+        .exam-layout { display: none; grid-template-columns: 1fr 280px; gap: 20px; align-items: start; }
+        .question-area { background: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 8px; min-height: 450px; position: relative; }
+        
+        /* Navigasi Panel */
+        .nav-panel { background: #f8f9fa; border: 1px solid #ddd; padding: 15px; border-radius: 8px; position: sticky; top: 75px; max-height: 80vh; overflow-y: auto; transition: 0.3s; }
+        .num-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 10px; }
+        .num-btn { padding: 10px; border: 1px solid #ccc; background: #fff; cursor: pointer; border-radius: 4px; text-align: center; font-weight: bold; transition: 0.2s; font-size: 14px; }
+        .num-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .num-btn.filled { background: #e8f0fe; color: var(--primary); border-color: var(--primary); }
+        .num-btn.doubt { background: var(--secondary) !important; color: white !important; border-color: var(--secondary) !important; }
+
+        /* Tombol Navigasi Melayang di ATAS untuk HP */
+        #toggleNavBtn { 
+            display: none; 
+            position: fixed; 
+            top: 10px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            padding: 10px 20px; 
+            border-radius: 25px; 
+            background: var(--primary); 
+            color: white; 
+            border: 2px solid white; 
+            font-size: 13px; 
+            font-weight: bold; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); 
+            z-index: 2001; 
+            cursor: pointer; 
+            white-space: nowrap;
+            transition: 0.3s;
+        }
+
+        /* Gaya Tabel & Opsi */
+        .soal-tabel { width: 100%; border-collapse: collapse; margin-top: 10px; min-width: 400px; }
+        .soal-tabel th, .soal-tabel td { border: 1px solid #ccc; padding: 12px; text-align: center; }
+        .soal-tabel th { background: #f1f3f4; }
+        .soal-tabel td:first-child { text-align: left; width: 50%; }
+        .cell-opt { cursor: pointer; transition: 0.2s; font-weight: bold; }
+        .cell-opt.selected { background: var(--primary); color: white; }
+
+        .option { display: flex; align-items: center; border: 2px solid #eee; margin-bottom: 12px; padding: 15px; cursor: pointer; border-radius: 8px; transition: 0.2s; }
+        .option.selected { border-color: var(--primary); background: #e8f0fe; font-weight: bold; }
+        .opt-box, .opt-circle { width: 18px; height: 18px; border: 2px solid var(--primary); margin-right: 12px; flex-shrink: 0; }
+        .opt-circle { border-radius: 50%; }
+        .selected .opt-box { background: var(--primary); color: white; text-align: center; line-height: 18px; }
+        .selected .opt-box:after { content: '✔'; font-size: 12px; }
+        .selected .opt-circle { background: var(--primary); box-shadow: inset 0 0 0 3px white; }
+
+        .q-img { max-width: 100%; height: auto; border-radius: 8px; margin: 15px 0; border: 1px solid #ddd; display: block; }
+        .btn { padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; }
+        .btn-blue { background: var(--primary); }
+        .btn-yellow { background: var(--secondary); }
+        .btn-red { background: var(--danger); width: 100%; margin-top: 20px; }
+        .btn-reset { background: #f0f0f0; color: #d93025; width: 100%; margin-top: 15px; font-size: 11px; border: 1px solid #ddd; }
+
+        /* Modal */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; justify-content: center; align-items: center; }
+        .modal-box { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; text-align: center; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0 15px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+
+        /* RESPONSIVE KHUSUS HP */
+        @media screen and (max-width: 768px) {
+            body { padding-top: 50px; } /* Ruang untuk tombol melayang di atas */
+            .exam-layout { grid-template-columns: 1fr; }
+            #toggleNavBtn { display: block; }
+            .nav-panel { 
+                position: fixed; 
+                top: 0; 
+                right: -320px; 
+                width: 280px; 
+                height: 100vh; 
+                z-index: 2000; 
+                background: white; 
+                border-radius: 0; 
+                padding: 70px 20px 20px 20px; 
+                box-shadow: -5px 0 15px rgba(0,0,0,0.2); 
+                box-sizing: border-box;
+            }
+            .nav-panel.open { right: 0; }
+            .container { padding: 10px; border-radius: 0; margin-top: 10px; }
+            .num-grid { grid-template-columns: repeat(4, 1fr); }
+            .soal-tabel { font-size: 13px; }
+        }
+    </style>
+</head>
+<body>
+
+<button id="toggleNavBtn" onclick="toggleSidebar()">☰ Daftar Nomor Soal</button>
+
+<div id="customModal" class="modal-overlay">
+    <div class="modal-box">
+        <h3 id="modalTitle">Pemberitahuan</h3>
+        <p id="modalMsg" style="white-space: pre-line;"></p>
+        <div id="modalFooter" style="display:flex; justify-content: center; gap: 10px; margin-top: 20px;">
+            <button class="btn btn-blue" onclick="closeModal()">Oke</button>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div id="login-sec">
+        <div class="header-info"><h2>UJIAN DIGITAL</h2><h3>INPUT IDENTITAS</h3></div>
+        <label>Pilih Sekolah:</label>
+        <select id="stuSekolah">
+            <option value="SDN KARANGREJEK I">SDN KARANGREJEK I</option>
+            <option value="SD LAIN">SD LAIN</option>
+        </select>
+        <label>Nama Lengkap:</label><input type="text" id="stuName">
+        <label>Nomor Absen:</label><input type="number" id="stuNo">
+        <label>Mata Pelajaran:</label>
+        <select id="stuMapel">
+            <option value="BAHASA INDONESIA">BAHASA INDONESIA</option>
+            <option value="IPAS">IPAS</option>
+            <option value="MATEMATIKA">MATEMATIKA</option>
+        </select>
+        <button class="btn btn-blue" style="width:100%" onclick="mulai()">MULAI UJIAN</button>
+    </div>
+
+    <div id="exam-sec" class="exam-layout">
+        <div class="question-area">
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px">
+                <b id="q-num" style="color:var(--primary);">Soal No. 1</b>
+                <b id="timer" style="color:var(--danger)">75:00</b>
+            </div>
+            <div id="q-text" style="font-size:18px; margin-bottom:20px"></div>
+            <div id="opt-area"></div>
+            <div style="display:flex; justify-content:space-between; margin-top:20px; gap: 8px;">
+                <button class="btn btn-blue" onclick="nav(-1)" style="flex:1">Kembali</button>
+                <button class="btn btn-yellow" onclick="toggleDoubt()" style="flex:1">Ragu</button>
+                <button class="btn btn-blue" onclick="nav(1)" style="flex:1">Lanjut</button>
+            </div>
+        </div>
+        
+        <div class="nav-panel" id="sidebar">
+            <h4 style="margin:0">Navigasi Nomor</h4>
+            <div id="num-grid" class="num-grid"></div>
+            <button class="btn btn-red" onclick="cekSebelumSelesai()">SELESAI & KIRIM</button>
+            <button class="btn btn-reset" onclick="resetSemuaDraf()">HAPUS SEMUA DRAF</button>
+        </div>
+    </div>
+
+    <div id="result-sec" style="display:none; text-align:center">
+        <h2>HASIL UJIAN</h2>
+        <h1 id="skor-akhir" style="font-size:80px; color:var(--primary)">0</h1>
+        <div id="info-pribadi" style="margin-bottom: 20px; font-weight: bold; white-space: pre-line;"></div>
+        <div id="stat-kirim" style="padding:15px; border-radius:8px; background: #eee;">Sedang mengirim jawaban...</div>
+    </div>
+</div>
+
+<script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbz9yHPeqABxKZIint0hzAPfe-ugZDenqrQRRVGrbTR-sVS_ye81CKttryFUDyuQHVIz/exec'; 
+
+    const databaseSoal = `
+Berdasarkan teks, tentukan sesuai atau tidak sesuai untuk pernyataan berikut! [TABEL]
+Kandang ayam bersih dan berventilasi baik | Sesuai * | Tidak Sesuai
+Ayam diberi makan pada malam hari | Sesuai | Tidak Sesuai *
+Telur dikumpulkan setiap pagi dan sore | Sesuai * | Tidak Sesuai
+
+Manakah fenomena yang sesuai dengan teks tanah longsor? [MCMA]
+Pohon membantu tanah tetap kuat *
+Penebangan pohon memperbesar risiko longsor *
+Tanah gundul akan mudah bergerak *
+Tanah longsor terjadi karena tanah terlalu kering
+
+Berdasarkan gambar, tentukan pernyataan berikut Benar atau Salah! [TABEL] [IMG: https://awsimages.detik.net.id/community/media/visual/2023/05/15/ilustrasi-tata-surya.jpeg?w=1200]
+Besar sudut BDC adalah 35° | Benar * | Salah
+Besar sudut BCD adalah 65° | Benar | Salah *
+Besar sudut ABD sama dengan sudut BDA | Benar * | Salah
+
+Pilih salah satu [IMG: https://awsimages.detik.net.id/community/media/visual/2023/05/15/ilustrasi-tata-surya.jpeg?w=1200]
+Besar sudut BDC adalah 35° *
+Besar sudut BCD adalah 65° 
+Besar sudut ABD sama dengan sudut BDA
+Semua besar susut salah
+    `;
+
+    let quizData = [], answers = [], doubtStatus = [], current = 0, timer, totalSec = 75 * 60;
+
+    databaseSoal.trim().split(/\n\s*\n/).forEach(block => {
+        let lines = block.split('\n').map(l => l.trim()).filter(l => l !== "");
+        let q = lines[0], opts = [], keys = [];
+        for(let i=1; i<lines.length; i++) {
+            if(q.includes("[TABEL]")) {
+                let parts = lines[i].split("|").map(p => p.trim());
+                let subQ = parts[0], subOpts = parts.slice(1).map(o => o.replace('*','').trim());
+                let subKey = parts.slice(1).find(o => o.includes('*')).replace('*','').trim();
+                opts.push({subQ, subOpts}); keys.push(subKey);
+            } else {
+                let txt = lines[i].replace('*','').trim();
+                if(lines[i].includes('*')) keys.push(txt);
+                opts.push(txt);
+            }
+        }
+        quizData.push({q, opts, keys});
+    });
+
+    function toggleSidebar() {
+        const side = document.getElementById('sidebar');
+        const btn = document.getElementById('toggleNavBtn');
+        side.classList.toggle('open');
+        if(side.classList.contains('open')) {
+            btn.innerHTML = "✕ Tutup Navigasi";
+            btn.style.background = "var(--danger)";
+        } else {
+            btn.innerHTML = "☰ Daftar Nomor Soal";
+            btn.style.background = "var(--primary)";
+        }
+    }
+
+    function showModal(title, msg, onOk = null, showCancel = false) {
+        document.getElementById('modalTitle').innerText = title;
+        document.getElementById('modalMsg').innerText = msg;
+        const footer = document.getElementById('modalFooter');
+        footer.innerHTML = "";
+        if(showCancel) {
+            let btnBatal = document.createElement("button");
+            btnBatal.className = "btn"; btnBatal.style.background = "#ccc"; btnBatal.innerText = "Batal";
+            btnBatal.onclick = closeModal; footer.appendChild(btnBatal);
+        }
+        let btnOk = document.createElement("button");
+        btnOk.className = "btn btn-blue"; btnOk.innerText = "Oke";
+        btnOk.onclick = () => { closeModal(); if(onOk) onOk(); };
+        footer.appendChild(btnOk);
+        document.getElementById('customModal').style.display = 'flex';
+    }
+
+    function closeModal() { document.getElementById('customModal').style.display = 'none'; }
+
+    function mulai() {
+        const n = document.getElementById('stuName').value, a = document.getElementById('stuNo').value;
+        if(!n || !a) return showModal("Peringatan", "Lengkapi identitas!");
+        localStorage.setItem('wonosari_sekolah', document.getElementById('stuSekolah').value);
+        localStorage.setItem('wonosari_name', n);
+        localStorage.setItem('wonosari_no', a);
+        localStorage.setItem('wonosari_mapel', document.getElementById('stuMapel').value);
+        answers = JSON.parse(localStorage.getItem('wonosari_ans')) || new Array(quizData.length).fill(null);
+        doubtStatus = JSON.parse(localStorage.getItem('wonosari_doubt')) || new Array(quizData.length).fill(false);
+        document.getElementById('login-sec').style.display = 'none';
+        document.getElementById('exam-sec').style.display = 'grid';
+        tampil();
+        timer = setInterval(updateTimer, 1000);
+    }
+
+    function updateTimer() {
+        totalSec--;
+        let m = Math.floor(totalSec/60), s = totalSec % 60;
+        document.getElementById('timer').innerText = `${m}:${s<10?'0'+s:s}`;
+        if(totalSec <= 0) { clearInterval(timer); selesai(); }
+    }
+
+    function tampil() {
+        let d = quizData[current], isMCMA = d.q.includes("[MCMA]"), isTABEL = d.q.includes("[TABEL]");
+        document.getElementById('q-num').innerText = "Soal No. " + (current + 1);
+        let teksSoal = d.q.replace("[TABEL]","").replace("[MCMA]","").replace(/\[IMG:\s*(.*?)\]/g, '<img src="$1" class="q-img">');
+        document.getElementById('q-text').innerHTML = teksSoal;
+        let html = "";
+        if (isTABEL) {
+            html += `<div style="overflow-x:auto; margin-bottom:10px;"><table class="soal-tabel"><tr><th>Pernyataan</th><th>${d.opts[0].subOpts[0]}</th><th>${d.opts[0].subOpts[1]}</th></tr>`;
+            d.opts.forEach((o, row) => {
+                html += `<tr><td>${o.subQ}</td>`;
+                o.subOpts.forEach(opt => {
+                    let sel = (Array.isArray(answers[current]) && answers[current][row] === opt);
+                    html += `<td class="cell-opt ${sel?'selected':''}" onclick="pilihTabel(${row}, '${opt}')">${opt}</td>`;
+                });
+                html += `</tr>`;
+            });
+            html += `</table></div>`;
+        } else {
+            d.opts.forEach(o => {
+                let sel = isMCMA ? (Array.isArray(answers[current]) && answers[current].includes(o)) : (answers[current] === o);
+                html += `<div class="option ${sel?'selected':''}" onclick="pilih('${o}', ${isMCMA})">
+                    <div class="${isMCMA?'opt-box':'opt-circle'}"></div><span>${o}</span></div>`;
+            });
+        }
+        document.getElementById('opt-area').innerHTML = html;
+        renderNav();
+        const side = document.getElementById('sidebar');
+        if(window.innerWidth <= 768 && side.classList.contains('open')) {
+            toggleSidebar();
+        }
+    }
+
+    function pilih(v, isMCMA) {
+        if(isMCMA) {
+            if(!Array.isArray(answers[current])) answers[current] = [];
+            let i = answers[current].indexOf(v);
+            if(i > -1) answers[current].splice(i, 1); else answers[current].push(v);
+            if(answers[current].length === 0) answers[current] = null;
+        } else answers[current] = v;
+        localStorage.setItem('wonosari_ans', JSON.stringify(answers));
+        tampil();
+    }
+
+    function pilihTabel(row, val) {
+        if(!Array.isArray(answers[current])) answers[current] = new Array(quizData[current].opts.length).fill(null);
+        answers[current][row] = val;
+        localStorage.setItem('wonosari_ans', JSON.stringify(answers));
+        tampil();
+    }
+
+    function toggleDoubt() { 
+        doubtStatus[current] = !doubtStatus[current]; 
+        localStorage.setItem('wonosari_doubt', JSON.stringify(doubtStatus));
+        renderNav(); 
+    }
+
+    function renderNav() {
+        let html = "";
+        for(let i=0; i<quizData.length; i++) {
+            let q = quizData[i], ans = answers[i], lengkap = false;
+            if(q.q.includes("[MCMA]")) lengkap = Array.isArray(ans) && ans.length > 0;
+            else if(q.q.includes("[TABEL]")) lengkap = Array.isArray(ans) && ans.length === q.opts.length && ans.every(x => x !== null);
+            else lengkap = !!ans;
+            let cls = "num-btn" + (i===current?" active":"") + (doubtStatus[i]?" doubt":(lengkap?" filled":""));
+            html += `<div class="${cls}" onclick="current=${i};tampil()">${i+1}</div>`;
+        }
+        document.getElementById('num-grid').innerHTML = html;
+    }
+
+    function resetSemuaDraf() {
+        showModal("Hapus Draf", "Yakin hapus semua jawaban? Hubungi Gurumu!", () => { localStorage.clear(); location.reload(); }, true);
+    }
+
+    function nav(v) { let t = current + v; if(t>=0 && t<quizData.length) { current = t; tampil(); } }
+
+    function cekSebelumSelesai() {
+        let nomorKosong = [];
+        quizData.forEach((q, i) => {
+            let ans = answers[i], lengkap = false;
+            if(q.q.includes("[MCMA]")) lengkap = Array.isArray(ans) && ans.length > 0;
+            else if(q.q.includes("[TABEL]")) lengkap = Array.isArray(ans) && ans.length === q.opts.length && ans.every(x => x !== null);
+            else lengkap = !!ans;
+            if (!lengkap) nomorKosong.push(i + 1);
+        });
+        if(nomorKosong.length > 0) {
+            showModal("Belum Lengkap", "Beberapa soal belum dikerjakan:\nNomor: " + nomorKosong.join(", "));
+        } else {
+            showModal("Konfirmasi", "Yakin ingin mengirim jawaban?", () => selesai(), true);
+        }
+    }
+
+    function selesai() {
+        clearInterval(timer);
+        const sekolah = localStorage.getItem('wonosari_sekolah'), nama = localStorage.getItem('wonosari_name'), 
+              absen = localStorage.getItem('wonosari_no'), mapel = localStorage.getItem('wonosari_mapel');
+        document.getElementById('exam-sec').style.display = 'none';
+        document.getElementById('result-sec').style.display = 'block';
+        document.getElementById('info-pribadi').innerText = `${sekolah}\n${nama} | Absen: ${absen}\nMapel: ${mapel}`;
+        let benar = 0, rincian = [];
+        quizData.forEach((q, i) => {
+            let isCorrect = false;
+            if(q.q.includes("[TABEL]")) isCorrect = JSON.stringify(answers[i]) === JSON.stringify(q.keys);
+            else if(q.q.includes("[MCMA]")) isCorrect = (answers[i]||[]).sort().join("|") === q.keys.sort().join("|");
+            else isCorrect = answers[i] === q.keys[0];
+            if(isCorrect) benar++;
+            rincian.push(`No${i+1}:${Array.isArray(answers[i])?answers[i].join("/"):answers[i]||'-'}`);
+        });
+        let skor = Math.round((benar/quizData.length)*100);
+        document.getElementById('skor-akhir').innerText = skor;
+        const formData = new URLSearchParams();
+        formData.append('sekolah', sekolah); formData.append('nama', nama);
+        formData.append('absen', absen); formData.append('mapel', mapel);
+        formData.append('nilai', skor); formData.append('analisis', rincian.join(" | "));
+        fetch(scriptURL, { method: 'POST', body: formData, mode: 'no-cors' })
+        .then(() => {
+            document.getElementById('stat-kirim').innerHTML = "✅ BERHASIL TERKIRIM";
+            document.getElementById('stat-kirim').style.background = "#d4edda";
+            localStorage.clear();
+        }).catch(() => {
+            document.getElementById('stat-kirim').innerHTML = "❌ GAGAL MENGIRIM";
+            document.getElementById('stat-kirim').style.background = "#f8d7da";
+        });
+    }
+</script>
+</body>
+</html>
