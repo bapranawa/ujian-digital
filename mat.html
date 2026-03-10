@@ -241,7 +241,6 @@ Semua besar susut salah
         const n = document.getElementById('stuName').value, a = document.getElementById('stuNo').value;
         if(!n || !a) return showModal("Peringatan", "Lengkapi identitas!");
         
-        // Tampilkan tombol navigasi di HP saat ujian dimulai
         if(window.innerWidth <= 768) {
             document.getElementById('toggleNavBtn').style.display = 'block';
             document.body.style.paddingTop = '60px';
@@ -339,7 +338,21 @@ Semua besar susut salah
         showModal("Hapus Draf", "Yakin hapus semua jawaban? Hubungi Guru!", () => { localStorage.clear(); location.reload(); }, true);
     }
 
-    function nav(v) { let t = current + v; if(t>=0 && t<quizData.length) { current = t; tampil(); } }
+    function nav(v) { 
+        let t = current + v; 
+        if(t>=0 && t<quizData.length) { 
+            current = t; 
+            tampil(); 
+        } else if (v === 1 && current === quizData.length - 1) {
+            // Jika menekan lanjut di nomor terakhir, tampilkan navigasi di HP
+            if(window.innerWidth <= 768) {
+                const side = document.getElementById('sidebar');
+                if(!side.classList.contains('open')) {
+                    toggleSidebar();
+                }
+            }
+        }
+    }
 
     function cekSebelumSelesai() {
         let nomorKosong = [];
@@ -359,7 +372,6 @@ Semua besar susut salah
 
     function selesai() {
         clearInterval(timer);
-        // Sembunyikan navigasi HP saat hasil muncul
         document.getElementById('toggleNavBtn').style.display = 'none';
         
         const sekolah = localStorage.getItem('wonosari_sekolah'), nama = localStorage.getItem('wonosari_name'), 
