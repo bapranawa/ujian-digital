@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ujian Digital SDN Karangrejek I</title>
+    <style>
+        :root { --primary: #1a73e8; --secondary: #fbbc04; --danger: #d93025; --bg: #f1f3f4; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 0; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 950px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-top: 15px; margin-bottom: 15px; }
+        .header-info { text-align: center; border-bottom: 2px solid #eee; margin-bottom: 20px; padding-bottom: 10px; }
+        
+        .exam-layout { display: none; grid-template-columns: 1fr 280px; gap: 20px; align-items: start; }
+        .question-area { background: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 8px; min-height: 450px; position: relative; }
+        
+        .nav-panel { background: #f8f9fa; border: 1px solid #ddd; padding: 15px; border-radius: 8px; position: sticky; top: 75px; max-height: 80vh; overflow-y: auto; }
+        .num-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 10px; }
+        .num-btn { padding: 10px; border: 1px solid #ccc; background: #fff; cursor: pointer; border-radius: 4px; text-align: center; font-weight: bold; font-size: 14px; }
+        .num-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .num-btn.filled { background: #e8f0fe; color: var(--primary); border-color: var(--primary); }
+        .num-btn.doubt { background: var(--secondary) !important; color: white !important; }
+
+        /* Gaya Pecahan & Simbol */
+        .frac { display: inline-block; vertical-align: middle; text-align: center; font-size: 0.9em; margin: 0 2px; }
+        .frac span { display: block; padding: 0 2px; }
+        .frac span.bottom { border-top: 1px solid #000; }
+
+        .table-responsive { width: 100%; overflow-x: auto; margin-top: 10px; border: 1px solid #ddd; border-radius: 8px; }
+        .soal-tabel { width: 100%; border-collapse: collapse; min-width: 500px; }
+        .soal-tabel th, .soal-tabel td { border: 1px solid #ccc; padding: 12px; text-align: center; }
+        .soal-tabel th { background: #f1f3f4; }
+        
+        .option { display: flex; align-items: center; border: 2px solid #eee; margin-bottom: 12px; padding: 15px; cursor: pointer; border-radius: 8px; }
+        .option.selected { border-color: var(--primary); background: #e8f0fe; font-weight: bold; }
+        .opt-box, .opt-circle { width: 18px; height: 18px; border: 2px solid var(--primary); margin-right: 12px; flex-shrink: 0; }
+        .opt-circle { border-radius: 50%; }
+        .selected .opt-box { background: var(--primary); color: white; text-align: center; line-height: 18px; }
+        .selected .opt-box:after { content: '✔'; font-size: 12px; }
+        .selected .opt-circle { background: var(--primary); box-shadow: inset 0 0 0 3px white; }
+
+        .q-img { max-width: 100%; height: auto; border-radius: 8px; margin: 15px 0; border: 1px solid #ddd; display: block; }
+        
+        .btn { padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; }
+        .btn-blue { background: var(--primary); }
+        .btn-yellow { background: var(--secondary); }
+        .btn-red { background: var(--danger); width: 100%; margin-top: 20px; }
+        
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; justify-content: center; align-items: center; }
+        .modal-box { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; text-align: center; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0 15px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+
+        @media screen and (max-width: 768px) {
+            .exam-layout { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="customModal" class="modal-overlay">
+    <div class="modal-box">
+        <h3 id="modalTitle">Pemberitahuan</h3>
+        <p id="modalMsg" style="white-space: pre-line;"></p>
+        <div id="modalFooter" style="display:flex; justify-content: center; gap: 10px; margin-top: 20px;">
+            <button class="btn btn-blue" onclick="closeModal()">Oke</button>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div id="login-sec">
+        <div class="header-info"><h2>UJIAN DIGITAL</h2><h3>INPUT IDENTITAS</h3></div>
+        <label>Pilih Sekolah:</label>
+        <select id="stuSekolah"><option value="SDN KARANGREJEK I">SDN KARANGREJEK I</option></select>
+        <label>Nama Lengkap:</label><input type="text" id="stuName">
+        <label>Nomor Absen:</label><input type="number" id="stuNo">
+        <label>Mata Pelajaran:</label>
+        <select id="stuMapel">
+            <option value="BAHASA INDONESIA">BAHASA INDONESIA</option>
+            <option value="IPAS">IPAS</option>
+            <option value="MATEMATIKA">MATEMATIKA</option>
+        </select>
+        <button id="btnMulai" class="btn btn-blue" style="width:100%" onclick="mulai()">MEMUAT SOAL...</button>
+    </div>
+
+    <div id="exam-sec" class="exam-layout">
+        <div class="question-area">
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px">
+                <b id="q-num" style="color:var(--primary);">Soal No. 1</b>
+                <b id="timer" style="color:var(--danger)">75:00</b>
+            </div>
+            <div id="q-text" style="font-size:18px; margin-bottom:20px"></div>
+            <div id="opt-area"></div>
+            <div style="display:flex; justify-content:space-between; margin-top:20px; gap: 8px;">
+                <button class="btn btn-blue" onclick="nav(-1)" style="flex:1">Kembali</button>
+                <button class="btn btn-yellow" onclick="toggleDoubt()" style="flex:1">Ragu</button>
+                <button class="btn btn-blue" onclick="nav(1)" style="flex:1">Lanjut</button>
+            </div>
+        </div>
+        
+        <div class="nav-panel">
+            <h4 style="margin:0">Navigasi Nomor</h4>
+            <div id="num-grid" class="num-grid"></div>
+            <button class="btn btn-red" onclick="cekSebelumSelesai()">SELESAI & KIRIM</button>
+        </div>
+    </div>
+
+    <div id="result-sec" style="display:none; text-align:center">
+        <h2>HASIL UJIAN</h2>
+        <h1 id="skor-akhir" style="font-size:80px; color:var(--primary)">0</h1>
+        <div id="info-pribadi" style="margin-bottom: 20px; font-weight: bold; white-space: pre-line;"></div>
+        <div id="stat-kirim" style="padding:15px; border-radius:8px; background: #eee;">Mengirim jawaban...</div>
+    </div>
+</div>
+
+<script>
+    const urlCSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0ygunsAFDz7VgvKlnkrX9uPIDJUKKAJMc9lZqcgX2qpGOFA72RLPgauj-pG9yr44vNXQkkM7S-9jG/pub?gid=0&single=true&output=csv';
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbz9yHPeqABxKZIint0hzAPfe-ugZDenqrQRRVGrbTR-sVS_ye81CKttryFUDyuQHVIz/exec'; 
+
+    let quizData = [], answers = [], doubtStatus = [], current = 0, timer, totalSec = 75 * 60;
+
+    async function ambilData() {
+        try {
+            const response = await fetch(urlCSV);
+            const data = await response.text();
+            prosesCSV(data);
+            document.getElementById('btnMulai').innerText = "MULAI UJIAN";
+        } catch (e) { document.getElementById('btnMulai').innerText = "GAGAL MUAT SOAL"; }
+    }
+
+    function prosesCSV(csv) {
+        // Menggunakan delimiter ";" (titik koma) sesuai standar Google Sheets Indonesia
+        const rows = csv.split('\n').slice(1);
+        rows.forEach(row => {
+            if(!row.trim()) return;
+            const cols = row.split(';'); // <--- KUNCI PERBAIKAN: Pakai titik koma
+            let qRaw = (cols[0] || "").replace(/^"|"$/g, '').trim();
+            let optRaw = (cols[1] || "").replace(/^"|"$/g, '').trim();
+            let imgUrl = (cols[2] || "").replace(/^"|"$/g, '').trim();
+
+            let opts = [], keys = [];
+            const lines = optRaw.split('\\n');
+
+            if(qRaw.includes("[TABEL]")) {
+                lines.forEach(line => {
+                    let parts = line.split('|').map(p => p.trim());
+                    if(parts.length < 2) return;
+                    let subQ = parts[0];
+                    let subOpts = parts.slice(1).map(o => o.replace('*','').trim());
+                    let subKey = parts.slice(1).find(o => o.includes('*'))?.replace('*','').trim();
+                    opts.push({subQ, subOpts}); keys.push(subKey);
+                });
+            } else {
+                lines.forEach(line => {
+                    let clean = line.replace('*','').trim();
+                    if(line.includes('*')) keys.push(clean);
+                    opts.push(clean);
+                });
+            }
+            if(qRaw) quizData.push({ q: qRaw, opts, keys, img: imgUrl });
+        });
+    }
+
+    function formatText(t) {
+        if(!t) return "";
+        return t.replace(/\\n/g, '<br>')
+                .replace(/\^(\d+)/g, '<sup>$1</sup>')
+                .replace(/\[P\](.*?)\/(.*?)\[\/P\]/g, '<div class="frac"><span>$1</span><span class="bottom">$2</span></div>');
+    }
+
+    function tampil() {
+        let d = quizData[current], isMCMA = d.q.includes("[MCMA]"), isTABEL = d.q.includes("[TABEL]");
+        document.getElementById('q-num').innerText = "Soal No. " + (current + 1);
+        let htmlSoal = formatText(d.q.replace("[TABEL]","").replace("[MCMA]",""));
+        if(d.img) htmlSoal += `<img src="${d.img}" class="q-img">`;
+        document.getElementById('q-text').innerHTML = htmlSoal;
+
+        let htmlOpt = "";
+        if (isTABEL) {
+            htmlOpt += `<div class="table-responsive"><table class="soal-tabel"><tr><th>Pernyataan</th><th>${d.opts[0].subOpts[0]}</th><th>${d.opts[0].subOpts[1]}</th></tr>`;
+            d.opts.forEach((o, row) => {
+                htmlOpt += `<tr><td style="text-align:left">${formatText(o.subQ)}</td>`;
+                o.subOpts.forEach(opt => {
+                    let sel = (Array.isArray(answers[current]) && answers[current][row] === opt);
+                    htmlOpt += `<td class="cell-opt ${sel?'selected':''}" onclick="pilihTabel(${row}, '${opt}')">${opt}</td>`;
+                });
+                htmlOpt += `</tr>`;
+            });
+            htmlOpt += `</table></div>`;
+        } else {
+            d.opts.forEach(o => {
+                let sel = isMCMA ? (Array.isArray(answers[current]) && answers[current].includes(o)) : (answers[current] === o);
+                htmlOpt += `<div class="option ${sel?'selected':''}" onclick="pilih('${o}', ${isMCMA})">
+                    <div class="${isMCMA?'opt-box':'opt-circle'}"></div><span>${formatText(o)}</span></div>`;
+            });
+        }
+        document.getElementById('opt-area').innerHTML = htmlOpt;
+        renderNav();
+    }
+
+    function mulai() {
+        const n = document.getElementById('stuName').value, a = document.getElementById('stuNo').value;
+        if(!n || !a) return showModal("Peringatan", "Lengkapi identitas!");
+        if(quizData.length === 0) return showModal("Error", "Soal belum termuat.");
+
+        localStorage.setItem('wonosari_name', n);
+        answers = new Array(quizData.length).fill(null);
+        doubtStatus = new Array(quizData.length).fill(false);
+
+        document.getElementById('login-sec').style.display = 'none';
+        document.getElementById('exam-sec').style.display = 'grid';
+        tampil();
+        timer = setInterval(() => {
+            totalSec--;
+            let m = Math.floor(totalSec/60), s = totalSec % 60;
+            document.getElementById('timer').innerText = `${m}:${s<10?'0'+s:s}`;
+            if(totalSec <= 0) selesai();
+        }, 1000);
+    }
+
+    function pilih(v, isMCMA) {
+        if(isMCMA) {
+            if(!Array.isArray(answers[current])) answers[current] = [];
+            let i = answers[current].indexOf(v);
+            if(i > -1) answers[current].splice(i, 1); else answers[current].push(v);
+        } else answers[current] = v;
+        tampil();
+    }
+
+    function pilihTabel(row, val) {
+        if(!Array.isArray(answers[current])) answers[current] = new Array(quizData[current].opts.length).fill(null);
+        answers[current][row] = val;
+        tampil();
+    }
+
+    function toggleDoubt() { doubtStatus[current] = !doubtStatus[current]; renderNav(); }
+    function nav(v) { let t = current + v; if(t>=0 && t<quizData.length) { current = t; tampil(); } }
+    function closeModal() { document.getElementById('customModal').style.display = 'none'; }
+
+    function renderNav() {
+        let html = "";
+        for(let i=0; i<quizData.length; i++) {
+            let ans = answers[i], lengkap = !!ans;
+            if(Array.isArray(ans)) lengkap = ans.length > 0 && !ans.includes(null);
+            let cls = "num-btn" + (i===current?" active":"") + (doubtStatus[i]?" doubt":(lengkap?" filled":""));
+            html += `<div class="${cls}" onclick="current=${i};tampil()">${i+1}</div>`;
+        }
+        document.getElementById('num-grid').innerHTML = html;
+    }
+
+    function cekSebelumSelesai() { showModal("Konfirmasi", "Yakin ingin kirim?", () => selesai(), true); }
+
+    function selesai() {
+        clearInterval(timer);
+        document.getElementById('exam-sec').style.display = 'none';
+        document.getElementById('result-sec').style.display = 'block';
+        let benar = 0;
+        quizData.forEach((q, i) => {
+            let ok = false;
+            if(q.q.includes("[TABEL]")) ok = JSON.stringify(answers[i]) === JSON.stringify(q.keys);
+            else if(q.q.includes("[MCMA]")) ok = (answers[i]||[]).sort().join("|") === q.keys.sort().join("|");
+            else ok = answers[i] === q.keys[0];
+            if(ok) benar++;
+        });
+        document.getElementById('skor-akhir').innerText = Math.round((benar/quizData.length)*100);
+        document.getElementById('stat-kirim').innerHTML = "✅ JAWABAN TERSIMPAN";
+    }
+
+    function showModal(title, msg, onOk = null, showCancel = false) {
+        document.getElementById('modalTitle').innerText = title;
+        document.getElementById('modalMsg').innerText = msg;
+        const footer = document.getElementById('modalFooter');
+        footer.innerHTML = "";
+        if(showCancel) {
+            let b = document.createElement("button"); b.className="btn"; b.innerText="Batal"; b.onclick=closeModal;
+            footer.appendChild(b);
+        }
+        let o = document.createElement("button"); o.className="btn btn-blue"; o.innerText="Oke";
+        o.onclick=()=>{closeModal(); if(onOk) onOk();};
+        footer.appendChild(o);
+        document.getElementById('customModal').style.display = 'flex';
+    }
+
+    window.onload = ambilData;
+</script>
+</body>
+</html>
