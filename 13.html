@@ -1,6 +1,4 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
+<html lang="id"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Ujian Digital SDN Karangrejek I</title>
@@ -68,7 +66,7 @@
 
 <button id="btnMobileNav" onclick="toggleSidebar()">☰ Nomor</button>
 
-<div id="page-portal" style="display:flex; align-items:center; justify-content:center; height:100vh;">
+<div id="page-portal" style="display: none; align-items: center; justify-content: center; height: 100vh;">
     <div class="container" style="max-width:500px; text-align:center;"> 
         <h1 style="color:var(--primary); margin-bottom:0;">SDN KARANGREJEK I</h1>
         <p style="margin-top:5px; color:#666; font-weight:bold;">PORTAL UJIAN DIGITAL</p>
@@ -77,9 +75,9 @@
     </div>
 </div>
 
-<div id="editor-page" style="display:none; height:100vh; flex-direction:column; background:white;">
+<div id="editor-page" style="display: flex; height: 100vh; flex-direction: column; background: white;">
     <div style="background:var(--primary); color:white; padding:10px 20px; display:flex; justify-content:space-between; align-items:center;">
-        <b>EDITOR & PENGATURAN UJIAN</b>
+        <b>EDITOR &amp; PENGATURAN UJIAN</b>
         <button onclick="exitEditor()" style="background:none; border:1px solid white; color:white; cursor:pointer; padding: 5px 10px; border-radius: 4px;">KELUAR</button>
     </div>
     <div style="display:flex; gap:10px; padding:10px; background:#f1f3f4; border-bottom:1px solid #ddd; flex-wrap:wrap;">
@@ -90,10 +88,22 @@
     </div>
     <div style="display:flex; flex:1; overflow:hidden;">
         <textarea id="ed-input" oninput="livePreview()" placeholder="Ketik soal di sini..." style="width:50%; padding:15px; font-family:monospace; background:#f9f9f9; border:none; outline:none; font-size:14px;"></textarea>
-        <div id="ed-preview" style="flex:1; padding:20px; overflow-y:auto; border-left:1px solid #ddd;"></div>
+        <div id="ed-preview" style="flex:1; padding:20px; overflow-y:auto; border-left:1px solid #ddd;">Contoh PG: <span class="frac"><span class="top">1</span><span class="bottom">2</span></span> + <span class="frac"><span class="top">1</span><span class="bottom">2</span></span>? <div class="opt-row selected">
+                        
+                        <span>1  </span>
+                    </div><div class="opt-row ">
+                        
+                        <span> 2 </span>
+                    </div><div class="opt-row ">
+                        
+                        <span> 3 </span>
+                    </div><div class="opt-row ">
+                        
+                        <span>4</span>
+                    </div></div>
     </div>
     <div class="ed-footer" style="padding:15px; border-top:2px solid #ddd; background:white;">
-        <div id="ed-grid-nav" style="display:flex; gap:5px; overflow-x:auto; margin-bottom:10px; padding-bottom:5px;"></div>
+        <div id="ed-grid-nav" style="display:flex; gap:5px; overflow-x:auto; margin-bottom:10px; padding-bottom:5px;"><button class="btn-num " onclick="jumpEd(0)">1</button><button class="btn-num " onclick="jumpEd(1)">2</button><button class="btn-num " onclick="jumpEd(2)">3</button><button class="btn-num active" onclick="jumpEd(3)">4</button><button class="btn-num " onclick="jumpEd(4)">5</button></div>
         <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
             <button onclick="jumpEd(cur-1)" style="background:#888; color:white; padding:8px 15px; border:none; border-radius:4px;">PREV</button>
             <button onclick="addSoal()" style="background:green; color:white; padding:8px 15px; border:none; border-radius:4px;">+ NOMOR</button>
@@ -111,9 +121,9 @@
     <div id="sec-login">
         <div class="login-card">
             <h2 style="margin:0; color:var(--primary);">SDN KARANGREJEK I</h2>
-            <div id="info-ujian-siswa" style="background:#fff3cd; padding:10px; border-radius:8px; margin:15px 0; font-size:14px; border:1px solid #ffeeba;">Memuat...</div>
+            <div id="info-ujian-siswa" style="background:#fff3cd; padding:10px; border-radius:8px; margin:15px 0; font-size:14px; border:1px solid #ffeeba;"><b>Mapel:</b> Matematika<br><b>Kelas:</b> VI<br><b>Ujian:</b> ASAS<br><b>Waktu:</b> 1 Menit</div>
             <input type="text" id="in-nama" class="form-control" placeholder="Nama Lengkap">
-            <input type="text" id="in-kelas" class="form-control" placeholder="Kelas" readonly style="background:#eee;">
+            <input type="text" id="in-kelas" class="form-control" placeholder="Kelas" readonly="" style="background:#eee;">
             <input type="number" id="in-absen" class="form-control" placeholder="Nomor Absen">
             <button onclick="startExam()" style="width:100%; padding:15px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">MULAI UJIAN</button>
         </div>
@@ -142,7 +152,7 @@
                     <h4 style="margin:0;">NOMOR SOAL</h4>
                     <div id="s-grid" style="display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; margin-top:10px;"></div>
                     <button onclick="finishBtn()" style="width:100%; margin-top:30px; padding:15px; background:var(--danger); color:white; border:none; border-radius:8px; font-weight:bold;">SELESAI</button>
-                    <button onclick="resetAnswersBtn()" style="width:100%; margin-top:15px; border:none; color:red; background:none; cursor:pointer; font-size:11px; text-decoration:underline;">HAPUS SESI & KELUAR</button>
+                    <button onclick="resetAnswersBtn()" style="width:100%; margin-top:15px; border:none; color:red; background:none; cursor:pointer; font-size:11px; text-decoration:underline;">HAPUS SESI &amp; KELUAR</button>
                 </div>
             </div>
         </div>
@@ -247,7 +257,12 @@
         let config = localStorage.getItem('exam_config');
         let fullHTML = document.documentElement.outerHTML;
         let scriptUpdate = `\n<script>\nlocalStorage.setItem('db_exam_v4', '${database.replace(/'/g, "\\'")}');\nlocalStorage.setItem('exam_config', '${config.replace(/'/g, "\\'")}');\n<\/script>\n`;
-        let finalCode = fullHTML.replace('</body>', scriptUpdate + '</body>');
+        let finalCode = fullHTML.replace('
+<script>
+localStorage.setItem('db_exam_v4', '["Contoh PG: 1/2 + 1/2? ### \n1 * \n 2 \n 3 \n4\n"," Contoh MCMA: Pilih Mamalia! [MCMA] Pilih lebih dari satu ### \nSapi * \n Ayam \n Paus * "," Contoh Tabel: Cek Pernyataan! [TABEL] ### \nMatahari dari timur | Benar * | Salah \n Bumi itu kotak | Benar | Salah *","Contoh PG: 1/2 + 1/2? ### \n1 * \n 2 \n 3 \n4","Contoh PG: 1/2 + 1/2? ### \n1 * \n 2 \n 3 \n4"]');
+localStorage.setItem('exam_config', '{"mapel":"Matematika","kelas":"VI","jenis":"ASAS","waktu":"1"}');
+</script>
+</body>', scriptUpdate + '</body>');
         navigator.clipboard.writeText(finalCode).then(() => { showModal("SALIN BERHASIL", "Kode HTML lengkap dengan soal terbaru telah disalin. Silakan simpan di file .html Anda."); });
     }
 
@@ -419,5 +434,5 @@
         win.document.write(h + `</body></html>`); win.document.close(); win.print();
     }
 </script>
-</body>
-</html>
+
+</body></html>
