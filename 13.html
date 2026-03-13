@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ujian Digital SDN Karangrejek I</title>
+    <style>
+        :root { --primary: #1a73e8; --secondary: #fbbc04; --danger: #d93025; --bg: #f1f3f4; --success: #34a853; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 0; }
+        .container { width: 95%; max-width: 900px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin: 10px auto; box-sizing: border-box; }
+        
+        /* CSS MODAL KUSTOM */
+        #customModal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; }
+        .modal-content { background: white; width: 90%; max-width: 400px; border-radius: 15px; overflow: hidden; animation: zoomIn 0.3s; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .modal-header { background: var(--primary); color: white; padding: 15px; text-align: center; font-weight: bold; font-size: 18px; text-transform: uppercase; letter-spacing: 1px; }
+        .modal-body { padding: 25px; text-align: center; font-size: 16px; color: #333; line-height: 1.5; font-weight: 500; }
+        .modal-footer { padding: 15px; display: flex; gap: 10px; justify-content: center; background: #f8f9fa; }
+        .btn-modal { padding: 12px 25px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; }
+        .btn-ok { background: var(--primary); color: white; }
+        .btn-cancel { background: #ccc; color: #333; }
+        @keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        /* FORM & LAYOUT */
+        .login-card { max-width: 480px; margin: 20px auto; padding: 25px; background: #fff; border-radius: 20px; border-top: 10px solid var(--primary); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .form-control { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 10px; font-size: 16px; box-sizing: border-box; margin-bottom: 10px; display: block; }
+        .sticky-header { position: sticky; top: 0; background: white; z-index: 100; padding: 10px 0; border-bottom: 3px solid var(--primary); margin-bottom: 20px; }
+        .info-header-baru { display: block; text-align: center; font-size: 12px; font-weight: 800; background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #ddd; text-transform: uppercase; color: #333; }
+        
+        #btnMobileNav { display: none; position: fixed; top: 10px; right: 10px; z-index: 2100; padding: 10px; background: var(--primary); color: white; border: none; border-radius: 5px; font-weight: bold; }
+        .exam-layout { display: none; grid-template-columns: 1fr 280px; gap: 20px; }
+        .side-nav { position: sticky; top: 20px; background: white; padding: 15px; border-radius: 10px; border: 1px solid #ddd; }
+
+        @media screen and (max-width: 768px) { .exam-layout { grid-template-columns: 1fr; } .side-nav { position: fixed; top: 0; right: -320px; width: 280px; height: 100vh; z-index: 2000; transition: 0.4s; padding: 60px 20px; overflow-y: auto; background: white; } .side-nav.open { right: 0; } #btnMobileNav.active { display: block; } }
+        
+        /* OPSI JAWABAN */
+        .opt-row { display: flex; align-items: center; border: 2px solid #eee; margin-bottom: 12px; padding: 14px 15px; cursor: pointer; border-radius: 10px; transition: 0.2s; position: relative; }
+        .opt-row:hover { background: #f9f9f9; border-color: #ccc; }
+        .opt-row.selected { border-color: var(--primary); background: #e8f0fe; }
+        
+        /* CHECKBOX BOX UNTUK MCMA */
+        .checkbox-box { width: 20px; height: 20px; border: 2px solid #ccc; border-radius: 4px; margin-right: 15px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: white; }
+        .opt-row.selected .checkbox-box { background: var(--primary); border-color: var(--primary); }
+        .opt-row.selected .checkbox-box::after { content: '✓'; color: white; font-weight: bold; font-size: 14px; }
+
+        .btn-num { min-width: 36px; height: 36px; border: 1px solid #ccc; background: white; cursor: pointer; border-radius: 8px; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+        .btn-num.active { background: var(--primary) !important; color: white !important; }
+        .btn-num.filled { background: #e8f0fe; color: var(--primary); }
+        .btn-num.doubt { background: var(--secondary) !important; color: white !important; }
+        
+        .frac { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; font-size: 0.9em; }
+        .frac .top { border-bottom: 1.5px solid black; padding: 0 3px; }
+        .soal-tabel { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 16px; }
+        .soal-tabel td, .soal-tabel th { border: 1px solid #ccc; padding: 12px 8px; text-align: center; }
+        .soal-tabel th { background: #f8f9fa; }
+    </style>
+</head>
+<body onload="checkActiveSession()">
+
+<div id="customModal">
+    <div class="modal-content">
+        <div id="modalHeader" class="modal-header">PEMBERITAHUAN</div>
+        <div id="modalBody" class="modal-body">Pesan disini...</div>
+        <div class="modal-footer" id="modalFooter">
+            <button class="btn-modal btn-ok" onclick="closeModal()">OK</button>
+        </div>
+    </div>
+</div>
+
+<button id="btnMobileNav" onclick="toggleSidebar()">☰ Nomor</button>
+
+<div id="page-portal" style="display:flex; align-items:center; justify-content:center; height:100vh;">
+    <div class="container" style="max-width:500px; text-align:center;"> 
+        <h1 style="color:var(--primary); margin-bottom:0;">SDN KARANGREJEK I</h1>
+        <p style="margin-top:5px; color:#666; font-weight:bold;">PORTAL UJIAN DIGITAL</p>
+        <button onclick="showSiswa()" style="width:100%; padding:15px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; margin-bottom:12px;">MASUK SEBAGAI SISWA</button>
+        <button onclick="showAdmin()" style="width:100%; padding:15px; background:#555; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">OPERATOR / GURU</button>
+    </div>
+</div>
+
+<div id="editor-page" style="display:none; height:100vh; flex-direction:column; background:white;">
+    <div style="background:var(--primary); color:white; padding:10px 20px; display:flex; justify-content:space-between; align-items:center;">
+        <b>EDITOR & PENGATURAN UJIAN</b>
+        <button onclick="exitEditor()" style="background:none; border:1px solid white; color:white; cursor:pointer; padding: 5px 10px; border-radius: 4px;">KELUAR</button>
+    </div>
+    <div style="display:flex; gap:10px; padding:10px; background:#f1f3f4; border-bottom:1px solid #ddd; flex-wrap:wrap;">
+        <input type="text" id="ed-mapel" placeholder="Mata Pelajaran" style="padding:5px; border-radius:4px; border:1px solid #ccc;">
+        <input type="text" id="ed-kelas" placeholder="Kelas" style="padding:5px; border-radius:4px; border:1px solid #ccc; width:80px;">
+        <input type="text" id="ed-jenis" placeholder="Jenis Ujian" style="padding:5px; border-radius:4px; border:1px solid #ccc;">
+        <input type="number" id="ed-waktu" placeholder="Waktu (Menit)" style="width:100px; padding:5px; border-radius:4px; border:1px solid #ccc;">
+    </div>
+    <div style="display:flex; flex:1; overflow:hidden;">
+        <textarea id="ed-input" oninput="livePreview()" placeholder="Ketik soal di sini..." style="width:50%; padding:15px; font-family:monospace; background:#f9f9f9; border:none; outline:none; font-size:14px;"></textarea>
+        <div id="ed-preview" style="flex:1; padding:20px; overflow-y:auto; border-left:1px solid #ddd;"></div>
+    </div>
+    <div class="ed-footer" style="padding:15px; border-top:2px solid #ddd; background:white;">
+        <div id="ed-grid-nav" style="display:flex; gap:5px; overflow-x:auto; margin-bottom:10px; padding-bottom:5px;"></div>
+        <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
+            <button onclick="jumpEd(cur-1)" style="background:#888; color:white; padding:8px 15px; border:none; border-radius:4px;">PREV</button>
+            <button onclick="addSoal()" style="background:green; color:white; padding:8px 15px; border:none; border-radius:4px;">+ NOMOR</button>
+            <button onclick="hapusSoal()" style="background:var(--danger); color:white; padding:8px 15px; border:none; border-radius:4px;">HAPUS</button>
+            <button onclick="jumpEd(cur+1)" style="background:#888; color:white; padding:8px 15px; border:none; border-radius:4px;">NEXT</button>
+            <button onclick="saveCurrentEd(true)" style="background:var(--primary); color:white; padding:8px 15px; border:none; border-radius:4px;">SIMPAN DATA</button>
+            <button onclick="imporMasal()" style="background:black; color:white; padding:8px 15px; border:none; border-radius:4px;">IMPOR SOAL</button>
+            <button onclick="copyFullHTML()" style="background:#003366; color:white; padding:8px 15px; border:none; border-radius:4px;">SALIN HTML FULL</button>
+            <button onclick="printSoal()" style="background:orange; color:white; padding:8px 15px; border:none; border-radius:4px;">CETAK</button>
+        </div>
+    </div>
+</div>
+
+<div id="page-siswa" style="display:none;">
+    <div id="sec-login">
+        <div class="login-card">
+            <h2 style="margin:0; color:var(--primary);">SDN KARANGREJEK I</h2>
+            <div id="info-ujian-siswa" style="background:#fff3cd; padding:10px; border-radius:8px; margin:15px 0; font-size:14px; border:1px solid #ffeeba;">Memuat...</div>
+            <input type="text" id="in-nama" class="form-control" placeholder="Nama Lengkap">
+            <input type="text" id="in-kelas" class="form-control" placeholder="Kelas" readonly style="background:#eee;">
+            <input type="number" id="in-absen" class="form-control" placeholder="Nomor Absen">
+            <button onclick="startExam()" style="width:100%; padding:15px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">MULAI UJIAN</button>
+        </div>
+    </div>
+
+    <div id="sec-exam" style="display:none;">
+        <div class="container">
+            <div class="exam-layout" style="display:grid;">
+                <div class="main-content">
+                    <div class="sticky-header">
+                        <div id="new-info-bar" class="info-header-baru"></div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <b id="s-nomor-teks" style="color:var(--primary); font-size:18px;">Soal 1</b>
+                            <b id="s-waktu-teks" style="color:red; border:2px solid red; padding:5px 12px; border-radius:8px;">00:00</b>
+                        </div>
+                    </div>
+                    <div id="s-soal-box" style="font-size:18px; line-height:1.6;"></div>
+                    <div id="s-opsi-box" style="margin-top:25px;"></div>
+                    <div style="display:flex; gap:10px; margin-top:30px;">
+                        <button onclick="move(-1)" style="flex:1; padding:15px; border-radius:8px;">KEMBALI</button>
+                        <button onclick="markDoubt()" style="flex:1; padding:15px; background:var(--secondary); color:white; border:none; border-radius:8px;">RAGU</button>
+                        <button onclick="move(1)" style="flex:1; padding:15px; background:var(--primary); color:white; border:none; border-radius:8px;">LANJUT</button>
+                    </div>
+                </div>
+                <div class="side-nav" id="sidebar">
+                    <h4 style="margin:0;">NOMOR SOAL</h4>
+                    <div id="s-grid" style="display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; margin-top:10px;"></div>
+                    <button onclick="finishBtn()" style="width:100%; margin-top:30px; padding:15px; background:var(--danger); color:white; border:none; border-radius:8px; font-weight:bold;">SELESAI</button>
+                    <button onclick="resetAnswersBtn()" style="width:100%; margin-top:15px; border:none; color:red; background:none; cursor:pointer; font-size:11px; text-decoration:underline;">HAPUS SESI & KELUAR</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="sec-result" style="display:none; text-align:center; padding:50px;">
+        <h2 style="color:var(--success);">UJIAN SELESAI</h2>
+        <h1 id="final-skor" style="font-size:100px; color:var(--primary); margin:20px 0;">0</h1>
+        <div id="final-status">MENGIRIM DATA...</div>
+        <button onclick="resetAnswers()" style="margin-top:30px; padding:10px 20px; border-radius:8px; background:#555; color:white; border:none;">KELUAR</button>
+    </div>
+</div>
+
+<script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbzoPbsEpUbJWO4pSXxOL0Oehrs9TljGCpzUozf9YJ4CxbkEDi5W18Xjn5q6H5cTUuga/exec';
+    let db = []; let cur = 0; let ans = []; let dbt = []; let timer, timeRemaining;
+
+    /* FUNGSI MODAL KUSTOM */
+    function showModal(title, msg) {
+        document.getElementById('modalHeader').innerText = title;
+        document.getElementById('modalBody').innerText = msg;
+        document.getElementById('modalFooter').innerHTML = `<button class="btn-modal btn-ok" onclick="closeModal()">OK</button>`;
+        document.getElementById('customModal').style.display = 'flex';
+    }
+
+    function showConfirm(title, msg, onConfirm) {
+        document.getElementById('modalHeader').innerText = title;
+        document.getElementById('modalBody').innerText = msg;
+        document.getElementById('modalFooter').innerHTML = `
+            <button class="btn-modal btn-cancel" onclick="closeModal()">BATAL</button>
+            <button class="btn-modal btn-ok" id="modalConfirmBtn">YA, LANJUTKAN</button>
+        `;
+        document.getElementById('modalConfirmBtn').onclick = () => { closeModal(); onConfirm(); };
+        document.getElementById('customModal').style.display = 'flex';
+    }
+
+    function closeModal() { document.getElementById('customModal').style.display = 'none'; }
+
+    /* LOGIKA DASAR */
+    function loadLocal() { 
+        let d = localStorage.getItem('db_exam_v4'); 
+        db = d ? JSON.parse(d) : ["Contoh Soal ### Opsi 1 * \n Opsi 2"]; 
+        let config = JSON.parse(localStorage.getItem('exam_config') || '{"mapel":"Belum Diatur","kelas":"-","jenis":"-","waktu":60}');
+        document.getElementById('ed-mapel').value = config.mapel;
+        document.getElementById('ed-kelas').value = config.kelas;
+        document.getElementById('ed-jenis').value = config.jenis;
+        document.getElementById('ed-waktu').value = config.waktu;
+        document.getElementById('in-kelas').value = config.kelas;
+        document.getElementById('info-ujian-siswa').innerHTML = `<b>Mapel:</b> ${config.mapel}<br><b>Kelas:</b> ${config.kelas}<br><b>Ujian:</b> ${config.jenis}<br><b>Waktu:</b> ${config.waktu} Menit`;
+    }
+
+    function checkActiveSession() { 
+        loadLocal(); 
+        if(localStorage.getItem('isExamRunning') === 'true') { 
+            document.getElementById('page-portal').style.display = 'none'; 
+            document.getElementById('page-siswa').style.display = 'block'; 
+            ans = JSON.parse(localStorage.getItem('active_ans')) || []; 
+            dbt = JSON.parse(localStorage.getItem('active_dbt')) || []; 
+            timeRemaining = parseInt(localStorage.getItem('active_time')); 
+            cur = parseInt(localStorage.getItem('active_cur')) || 0; 
+            document.getElementById('sec-login').style.display = 'none'; 
+            document.getElementById('sec-exam').style.display = 'block'; 
+            document.getElementById('btnMobileNav').classList.add('active'); 
+            updateHeaderTeks(); 
+            renderSiswa(); 
+            timer = setInterval(counting, 1000); 
+        } 
+    }
+
+    function showSiswa() { loadLocal(); document.getElementById('page-portal').style.display = 'none'; document.getElementById('page-siswa').style.display = 'block'; }
+    function showAdmin() { 
+        let pass = prompt("Sandi Operator:"); 
+        if(pass === "Admin123") { 
+            loadLocal(); 
+            document.getElementById('page-portal').style.display = 'none'; 
+            document.getElementById('editor-page').style.display = 'flex'; 
+            initEditor(); 
+        } else if(pass !== null) {
+            alert("Sandi Salah!");
+        }
+    }
+    
+    function exitEditor() { location.reload(); }
+    function initEditor() { renderEdNav(); loadToEditor(); }
+    function renderEdNav() { let h = ""; db.forEach((s,i) => h += `<button class="btn-num ${i===cur?'active':''}" onclick="jumpEd(${i})">${i+1}</button>`); document.getElementById('ed-grid-nav').innerHTML = h; }
+    function jumpEd(i) { if(i < 0 || i >= db.length) return; saveCurrentEd(); cur = i; initEditor(); }
+    function addSoal() { saveCurrentEd(); db.push(""); cur = db.length-1; initEditor(); }
+    function hapusSoal() { showConfirm("KONFIRMASI HAPUS", "Apakah Anda yakin ingin menghapus nomor soal ini?", () => { db.splice(cur, 1); if(cur > 0) cur--; if(db.length === 0) db.push(""); initEditor(); }); }
+    function loadToEditor() { document.getElementById('ed-input').value = db[cur] || ""; livePreview(); }
+
+    function saveCurrentEd(n) { 
+        db[cur] = document.getElementById('ed-input').value; 
+        localStorage.setItem('db_exam_v4', JSON.stringify(db)); 
+        let config = { mapel: document.getElementById('ed-mapel').value, kelas: document.getElementById('ed-kelas').value, jenis: document.getElementById('ed-jenis').value, waktu: document.getElementById('ed-waktu').value };
+        localStorage.setItem('exam_config', JSON.stringify(config));
+        if(n) showModal("BERHASIL", "Seluruh data pengaturan dan soal berhasil disimpan ke memori browser."); 
+    }
+
+    function copyFullHTML() {
+        saveCurrentEd();
+        let database = localStorage.getItem('db_exam_v4');
+        let config = localStorage.getItem('exam_config');
+        let fullHTML = document.documentElement.outerHTML;
+        let scriptUpdate = `\n<script>\nlocalStorage.setItem('db_exam_v4', '${database.replace(/'/g, "\\'")}');\nlocalStorage.setItem('exam_config', '${config.replace(/'/g, "\\'")}');\n<\/script>\n`;
+        let finalCode = fullHTML.replace('</body>', scriptUpdate + '</body>');
+        navigator.clipboard.writeText(finalCode).then(() => { showModal("SALIN BERHASIL", "Kode HTML lengkap dengan soal terbaru telah disalin. Silakan simpan di file .html Anda."); });
+    }
+
+    function imporMasal() { 
+        let kode = prompt("Paste semua kode soal hasil salinan:"); 
+        if(kode) { db = kode.trim().split(/\n\s*\n/).filter(s => s.trim() !== ""); cur = 0; saveCurrentEd(true); initEditor(); } 
+    }
+
+    function livePreview() {
+        let raw = document.getElementById('ed-input').value;
+        if(!raw.includes('###')) { document.getElementById('ed-preview').innerHTML = buildContent(raw); return; }
+        let p = raw.split('###'); let sTeks = p[0] || "", oTeks = p[1] || "";
+        let isMCMA = sTeks.includes("[MCMA]");
+        let html = buildContent(sTeks.replace("[TABEL]","").replace("[MCMA]",""));
+        if(oTeks) {
+            let lns = oTeks.trim().split(/\r?\n/).filter(l => l.trim() !== "");
+            if(sTeks.includes("[TABEL]")) {
+                html += `<table class="soal-tabel"><tr><th>Pernyataan</th><th>B</th><th>S</th></tr>`;
+                lns.forEach(l => { 
+                    let col = l.split('|').map(x => x.trim()); 
+                    if(col.length >= 3) { html += `<tr><td style="text-align:left;">${parseText(col[0])}</td><td><div class="btn-num ${col[1].includes('*')?'active':''}">${col[1].replace('*','')}</div></td><td><div class="btn-num ${col[2].includes('*')?'active':''}">${col[2].replace('*','')}</div></td></tr>`; } 
+                });
+                html += `</table>`;
+            } else { 
+                lns.forEach(l => { 
+                    html += `<div class="opt-row ${l.includes('*')?'selected':''}">
+                        ${isMCMA ? '<div class="checkbox-box"></div>' : ''}
+                        <span>${parseText(l.replace('*',''))}</span>
+                    </div>`; 
+                }); 
+            }
+        }
+        document.getElementById('ed-preview').innerHTML = html;
+    }
+
+    /* SISTEM UJIAN */
+    function startExam() {
+        let n = document.getElementById('in-nama').value, a = document.getElementById('in-absen').value;
+        if(!n || !a) return showModal("DATA TIDAK LENGKAP", "Silakan isi Nama Lengkap dan Nomor Absen sebelum memulai ujian.");
+        localStorage.setItem('isExamRunning', 'true'); 
+        localStorage.setItem('u_nama', n); localStorage.setItem('u_abs', a); localStorage.setItem('u_kls', document.getElementById('in-kelas').value);
+        ans = new Array(db.length).fill(null); dbt = new Array(db.length).fill(false); timeRemaining = parseInt(JSON.parse(localStorage.getItem('exam_config')).waktu) * 60;
+        document.getElementById('sec-login').style.display = 'none'; document.getElementById('sec-exam').style.display = 'block'; document.getElementById('btnMobileNav').classList.add('active');
+        updateHeaderTeks(); cur = 0; renderSiswa(); timer = setInterval(counting, 1000);
+    }
+
+    function counting() { if(timeRemaining <= 0) { clearInterval(timer); finish(true); return; } timeRemaining--; localStorage.setItem('active_time', timeRemaining); let m = Math.floor(timeRemaining/60), s = timeRemaining % 60; document.getElementById('s-waktu-teks').innerText = `${m}:${s<10?'0'+s:s}`; }
+
+    function renderSiswa() {
+        if(!db[cur]) return; let p = db[cur].split('###');
+        let sTeks = p[0] || "", oTeks = p[1] || "";
+        let isMCMA = sTeks.includes("[MCMA]");
+        document.getElementById('s-nomor-teks').innerText = "Soal No. " + (cur+1);
+        document.getElementById('s-soal-box').innerHTML = buildContent(sTeks.replace("[TABEL]","").replace("[MCMA]",""));
+        let h = "";
+        if(oTeks) {
+            let lns = oTeks.trim().split(/\r?\n/).filter(l => l.trim() !== "");
+            if(sTeks.includes("[TABEL]")) {
+                h += `<table class="soal-tabel"><tr><th>Pernyataan</th><th>B</th><th>S</th></tr>`;
+                lns.forEach((l, rIdx) => { 
+                    let c = l.split('|').map(x => x.trim()); 
+                    if(c.length >= 3) { 
+                        let bV = c[1].replace('*',''), sV = c[2].replace('*',''), sel = (Array.isArray(ans[cur]) && ans[cur][rIdx]); 
+                        h += `<tr><td style="text-align:left;">${parseText(c[0])}</td><td><div class="btn-num ${sel===bV?'active':''}" onclick="pickTabel(${rIdx},'${bV}')">${bV}</div></td><td><div class="btn-num ${sel===sV?'active':''}" onclick="pickTabel(${rIdx},'${sV}')">${sV}</div></td></tr>`; 
+                    } 
+                });
+                h += `</table>`;
+            } else { 
+                lns.forEach(l => { 
+                    let cl = l.replace('*','').trim(); 
+                    let isS = isMCMA ? (Array.isArray(ans[cur]) && ans[cur].includes(cl)) : (ans[cur] === cl); 
+                    h += `<div class="opt-row ${isS?'selected':''}" onclick="pick('${cl}',${isMCMA})">
+                        ${isMCMA ? '<div class="checkbox-box"></div>' : ''}
+                        <span>${parseText(cl)}</span>
+                    </div>`; 
+                }); 
+            }
+        }
+        document.getElementById('s-opsi-box').innerHTML = h; renderGrid(); localStorage.setItem('active_cur', cur);
+    }
+
+    function pick(v, mc) { if(mc) { if(!Array.isArray(ans[cur])) ans[cur] = []; let i = ans[cur].indexOf(v); if(i > -1) ans[cur].splice(i, 1); else ans[cur].push(v); } else ans[cur] = v; localStorage.setItem('active_ans', JSON.stringify(ans)); renderSiswa(); }
+    function pickTabel(r, v) { if(!Array.isArray(ans[cur])) ans[cur] = []; ans[cur][r] = v; localStorage.setItem('active_ans', JSON.stringify(ans)); renderSiswa(); }
+    function renderGrid() { let h = ""; db.forEach((s,i) => h += `<div class="btn-num ${i===cur?'active':''} ${dbt[i]?'doubt':(ans[i]?'filled':'')}" onclick="goTo(${i})">${i+1}</div>`); document.getElementById('s-grid').innerHTML = h; }
+    function goTo(i) { cur=i; renderSiswa(); }
+    function move(v) { let t = cur+v; if(t>=0 && t<db.length) goTo(t); }
+    function markDoubt() { dbt[cur] = !dbt[cur]; localStorage.setItem('active_dbt', JSON.stringify(dbt)); renderGrid(); }
+
+    function resetAnswersBtn() { showConfirm("KONFIRMASI RESET", "Tindakan ini akan menghapus seluruh progres ujian Anda dan kembali ke halaman login. Lanjutkan?", () => { resetAnswers(); }); }
+    function resetAnswers() { localStorage.removeItem('isExamRunning'); localStorage.removeItem('active_ans'); localStorage.removeItem('active_dbt'); localStorage.removeItem('active_time'); localStorage.removeItem('active_cur'); location.reload(); }
+
+    function finishBtn() {
+        let belum = [];
+        db.forEach((s, i) => { if(!ans[i] || (Array.isArray(ans[i]) && ans[i].filter(x=>x).length === 0)) belum.push(i+1); });
+        if(belum.length > 0) return showModal("BELUM SELESAI", "Anda belum menjawab soal nomor: " + belum.join(", ") + ". Silakan lengkapi semua jawaban.");
+        showConfirm("KONFIRMASI SELESAI", "Apakah Anda yakin ingin mengakhiri ujian dan mengirim jawaban?", () => { finish(); });
+    }
+
+    /* FUNGSI PENGIRIMAN DATA KE SPREADSHEET */
+    function finish(auto) {
+        clearInterval(timer); localStorage.setItem('isExamRunning', 'false');
+        document.getElementById('sec-exam').style.display = 'none'; document.getElementById('sec-result').style.display = 'block';
+        let benar = 0; let analisisJawaban = []; let config = JSON.parse(localStorage.getItem('exam_config'));
+        
+        db.forEach((s, i) => {
+            let p = s.split('###'); let lns = p[1].trim().split(/\r?\n/).filter(l => l.trim() !== "");
+            let status = "Salah";
+            let teksJawaban = ans[i] ? (Array.isArray(ans[i]) ? ans[i].join(", ") : ans[i]) : "Tidak Diisi";
+
+            if(p[0].includes("[TABEL]")) {
+    // 1. Ambil kunci & bersihkan spasi (Trim)
+    let kunci = lns.map(l => {
+        let kolom = l.split('|');
+        let pilihanKunci = kolom.find(x => x.includes('*'));
+        return pilihanKunci ? pilihanKunci.replace('*', '').trim() : null;
+    });
+
+    // 2. Ambil jawaban siswa & pastikan bersih dari spasi juga
+    let jawabanSiswaBersih = Array.isArray(ans[i]) ? ans[i].map(v => v ? v.trim() : null) : [];
+
+    // 3. Bandingkan
+    if(JSON.stringify(jawabanSiswaBersih) === JSON.stringify(kunci)) { 
+        benar++; 
+        status = "Benar"; 
+    }
+} else if(p[0].includes("[MCMA]")) {
+                let kunci = lns.filter(l => l.includes('*')).map(l => l.replace('*','').trim()).sort();
+                if(Array.isArray(ans[i]) && JSON.stringify(ans[i].sort()) === JSON.stringify(kunci)) { benar++; status = "Benar"; }
+            } else {
+                let kunci = lns.find(l => l.includes('*'))?.replace('*','').trim();
+                if(ans[i] === kunci) { benar++; status = "Benar"; }
+            }
+            analisisJawaban.push(`No ${i+1}: ${status} (${teksJawaban})`);
+        });
+
+        let skor = Math.round((benar / db.length) * 100);
+        document.getElementById('final-skor').innerText = skor;
+        const fd = new URLSearchParams();
+        fd.append('nama', localStorage.getItem('u_nama')); fd.append('kelas', localStorage.getItem('u_kls'));
+        fd.append('absen', localStorage.getItem('u_abs')); fd.append('mapel', config.mapel);
+        fd.append('nilai', skor); fd.append('jawaban', analisisJawaban.join(" | "));
+        
+        fetch(scriptURL, { method: 'POST', body: fd, mode: 'no-cors' })
+        .then(() => document.getElementById('final-status').innerText = "DATA BERHASIL TERKIRIM KE SERVER");
+    }
+
+    function parseText(t) { return t.replace(/(\d+)\/(\d+)/g, '<span class="frac"><span class="top">$1</span><span class="bottom">$2</span></span>'); }
+    function buildContent(raw) { return raw.split('\n').map(l => parseText(l)).join('<br>'); }
+    function updateHeaderTeks() { let config = JSON.parse(localStorage.getItem('exam_config')); document.getElementById('new-info-bar').innerHTML = `${localStorage.getItem('u_nama')} - ${config.mapel}`; }
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+    
+    function printSoal() {
+        saveCurrentEd(); let config = JSON.parse(localStorage.getItem('exam_config')); let win = window.open('', '_blank');
+        let h = `<html><head><title>Cetak Soal</title><style>body{font-family:serif;padding:40px;} .soal{margin-bottom:20px;page-break-inside:avoid;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid black;padding:5px;text-align:center;} .frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;font-size:0.8em;}.frac .top{border-bottom:1px solid black;} h2,h3{text-align:center;margin:2px;}</style></head><body>
+        <h2>SDN KARANGREJEK I</h2><h3>Mapel: ${config.mapel}</h3><hr>`;
+        db.forEach((s, i) => {
+            let p = s.split('###'); let qTeks = p[0] || "", oTeks = p[1] || "";
+            let lns = oTeks.trim().split(/\r?\n/).filter(l => l.trim() !== "");
+            h += `<div class="soal"><b>${i+1}.</b> ${buildContent(qTeks.replace("[TABEL]","").replace("[MCMA]",""))}`;
+            if(qTeks.includes("[TABEL]")) {
+                h += `<table><tr><th>Pernyataan</th><th>B</th><th>S</th></tr>`;
+                lns.forEach(l => { let c = l.split('|').map(x => x.trim()); h += `<tr><td style="text-align:left;">${parseText(c[0])}</td><td>${c[1]}</td><td>${c[2]}</td></tr>`; });
+                h += `</table>`;
+            } else if(lns.length > 0) {
+                h += `<ol type="A" style="margin-left:25px;">` + lns.map(l => `<li>${parseText(l)}</li>`).join('') + `</ol>`;
+            }
+            h += `</div>`;
+        });
+        win.document.write(h + `</body></html>`); win.document.close(); win.print();
+    }
+</script>
+</body>
+</html>
