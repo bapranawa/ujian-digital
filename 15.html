@@ -26,6 +26,7 @@
         .table-responsive { width: 100%; overflow-x: auto; margin-top: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; }
         .soal-tabel { width: 100%; border-collapse: collapse; min-width: 400px; background: #fff; }
         .soal-tabel th, .soal-tabel td { border: 1px solid #ccc; padding: 10px; text-align: left; font-size: 14px; }
+        .soal-tabel tr:nth-child(even) { background-color: #f9f9f9; }
         .cell-opt { cursor: pointer; font-weight: bold; text-align: center !important; }
         .cell-opt.selected { background: var(--primary); color: white; }
         .option { display: flex; align-items: center; border: 2px solid #eee; margin-bottom: 12px; padding: 15px; cursor: pointer; border-radius: 8px; }
@@ -115,19 +116,11 @@
 </div>
 
 <script>
-    // MASUKKAN URL DEPLOY BARU DISINI
-    const scriptURL = 'MASUKKAN_URL_SCRIPT_DISINI'; 
+    // GANTI URL INI DENGAN URL DEPLOY TERBARU DARI GOOGLE APPS SCRIPT
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbyTcvS_UjV47F7JpwZfFLz_GUrNDii-GXVjA86D-X05Qm2pD12pDAith7_ZHGqBPLColg/exec'; 
     let quizData = [], answers = [], doubtStatus = [], current = 0, timer, totalSec = 90 * 60;
 
-    // FUNGSI ACAK (Fisher-Yates)
-    function shuffle(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-        return array;
-    }
-
+    // FUNGSI LOGIN
     async function prosesLogin() {
         const u = document.getElementById('u_user').value;
         const p = document.getElementById('u_pass').value;
@@ -141,12 +134,6 @@
             const res = await resp.json();
             
             if(res.status === "success") {
-                // CEK PROTEKSI LOGIN GANDA
-                if(res.isActive && !localStorage.getItem('wonosari_session')) {
-                    showModal("Akses Ditolak", "Akun sedang digunakan di perangkat lain!");
-                    document.getElementById('btnLogin').innerText = "MASUK UJIAN";
-                    return;
-                }
                 localStorage.setItem('wonosari_user', JSON.stringify({...res, mapel: m}));
                 muatSoalFromServer(m);
             } else {
@@ -159,32 +146,26 @@
         }
     }
 
+    // AMBIL SOAL DARI SPREADSHEET
     async function muatSoalFromServer(mapel) {
         try {
             const resp = await fetch(`${scriptURL}?action=getSoal&mapel=${mapel}`, { method: 'POST' });
             let dataRaw = await resp.json();
             
             if(dataRaw.length === 0) {
-                showModal("Info", "Soal belum tersedia.");
+                showModal("Info", "Soal belum tersedia atau belum aktif.");
                 document.getElementById('btnLogin').innerText = "MASUK UJIAN";
                 return;
             }
 
-            // PROSES PENGACAKAN
-            quizData = shuffle(dataRaw); // Acak Nomor Soal
-            quizData.forEach(item => {
-                if(!item.q.includes("[TABEL]")) {
-                    item.opts = shuffle(item.opts); // Acak Pilihan
-                }
-            });
-
+            quizData = dataRaw;
             answers = new Array(quizData.length).fill(null);
             doubtStatus = new Array(quizData.length).fill(false);
             
             simpanSesi();
             mulaiUjian();
         } catch (e) {
-            showModal("Error", "Gagal memuat soal.");
+            showModal("Error", "Gagal memuat soal dari server.");
         }
     }
 
@@ -349,9 +330,7 @@
             let isCorrect = q.q.includes("[TABEL]") ? JSON.stringify(ans) === JSON.stringify(q.keys) : 
                             (q.q.includes("[MCMA]") ? (ans||[]).sort().join("|") === q.keys.sort().join("|") : ans === q.keys[0]);
             if(isCorrect) totalBenar++;
-            
-            // ANALISIS TETAP MENGGUNAKAN NOMOR ASLI (originalIndex)
-            report.push(`No${q.originalIndex + 1}:${isCorrect?'B':'S'}`);
+            report.push(`No${i+1}:${isCorrect?'B':'S'}`);
         });
 
         let skor = Math.round((totalBenar/quizData.length)*100);
